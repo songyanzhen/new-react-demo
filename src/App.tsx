@@ -28,7 +28,7 @@ function App() {
                 to="/puzzleTest"
                 className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-100 dark:hover:bg-slate-900"
               >
-                puzzleTest
+                猜人物
               </Link>
             </div>
           </div>
@@ -59,16 +59,16 @@ function Home() {
           </span>
         </div>
         <h1 className="mt-5 bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-4xl font-semibold tracking-tight text-transparent sm:text-5xl dark:from-slate-100 dark:via-slate-300 dark:to-slate-100">
-          Menu
+          菜单
         </h1>
         <p className="mt-3 text-base text-slate-600 dark:text-slate-300">
-          Choose a page to open.
+          选择一个页面开始。
         </p>
       </header>
 
       <section
         className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2"
-        aria-label="Menu"
+        aria-label="菜单"
       >
         <Link
           className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white/70 p-5 text-left shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-950/40"
@@ -81,17 +81,17 @@ function Home() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                puzzleTest
+                猜人物
               </div>
               <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                Blank page route for experiments.
+                通过属性提示来猜出目标电子游戏人物。
               </div>
               <div className="mt-4 inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span className="rounded-full bg-slate-900/5 px-2 py-1 dark:bg-white/10">
                   /puzzleTest
                 </span>
                 <span className="rounded-full bg-slate-900/5 px-2 py-1 dark:bg-white/10">
-                  route
+                  路由
                 </span>
               </div>
             </div>
