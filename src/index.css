@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 强制深色模式 */
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-dark-900 text-slate-100 antialiased;
+}
+
+/* 滚动条深色样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-dark-500;
+}
+
+/* 选中文字样式 */
+::selection {
+  @apply bg-indigo-500/30 text-indigo-100;
+}

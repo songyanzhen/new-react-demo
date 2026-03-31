@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  GAME_CHARACTERS_ZH as GAME_CHARACTERS,
-  type GameCharacterZh as GameCharacter,
+  GAME_CHARACTERS,
+  type GameCharacter,
 } from '../data/gameCharacters'
 
 type MatchLevel = 'match' | 'partial' | 'none'
@@ -48,10 +48,10 @@ function arrayMatch(a: string[], b: string[]): MatchLevel {
 
 function cellClass(level: MatchLevel) {
   if (level === 'match')
-    return 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900/40'
+    return 'bg-emerald-950/40 text-emerald-200 ring-1 ring-emerald-900/40'
   if (level === 'partial')
-    return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200 dark:bg-amber-950/35 dark:text-amber-200 dark:ring-amber-900/40'
-  return 'bg-rose-50 text-rose-900 ring-1 ring-rose-200 dark:bg-rose-950/35 dark:text-rose-200 dark:ring-rose-900/40'
+    return 'bg-amber-950/35 text-amber-200 ring-1 ring-amber-900/40'
+  return 'bg-rose-950/35 text-rose-200 ring-1 ring-rose-900/40'
 }
 
 function compareGuess(target: GameCharacter, guess: GameCharacter): GuessResult {
@@ -116,11 +116,13 @@ export function PuzzleTest() {
   const [error, setError] = useState<string | null>(null)
   const [guesses, setGuesses] = useState<GuessResult[]>([])
   const [imageLoading, setImageLoading] = useState(true)
-  const [hintLevel, setHintLevel] = useState(0) // 0-3，表示已解锁的提示数量
+  const [hintLevel, setHintLevel] = useState(0)
   const [titleClickCount, setTitleClickCount] = useState(0)
   const [showCheatBubble, setShowCheatBubble] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
+  const inputContainerRef = useRef<HTMLDivElement>(null)
 
-  // 当目标改变时重置状态
   useEffect(() => {
     setImageLoading(true)
     setHintLevel(0)
@@ -128,10 +130,31 @@ export function PuzzleTest() {
     setShowCheatBubble(false)
   }, [target.id])
 
+  // 点击外部关闭下拉框
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (inputContainerRef.current && !inputContainerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const suggestions = useMemo(() => {
     const q = normalize(input)
-    if (!q) return GAME_CHARACTERS.slice(0, 20)
-    return GAME_CHARACTERS.filter((c) => normalize(c.name).includes(q)).slice(0, 20)
+    // 匹配角色名或作品名
+    const filtered = GAME_CHARACTERS.filter((c) => 
+      normalize(c.name).includes(q) || normalize(c.franchise).includes(q)
+    )
+    // 空输入时按作品名分组排序，方便浏览
+    if (!q) {
+      return filtered.sort((a, b) => 
+        a.franchise.localeCompare(b.franchise, 'zh') || 
+        a.name.localeCompare(b.name, 'zh')
+      )
+    }
+    return filtered.slice(0, 20)
   }, [input])
 
   useEffect(() => {
@@ -190,28 +213,28 @@ export function PuzzleTest() {
       setStatus('won')
       setRevealed(true)
     } else {
-      // 猜错了，解锁下一个提示（最多3个）
       setHintLevel((prev) => Math.min(prev + 1, 3))
     }
+    setInput('')
+    setShowDropdown(false)
   }
 
   const answerBadge = (
-    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs text-slate-700 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
-      <span className="font-medium text-slate-900 dark:text-slate-100">答案</span>
-      <span className="h-3 w-px bg-slate-200 dark:bg-slate-800" />
+    <div className="inline-flex items-center gap-2 rounded-full border border-dark-600 bg-dark-800/60 px-3 py-1 text-xs text-slate-300 shadow-sm backdrop-blur">
+      <span className="font-medium text-slate-100">答案</span>
+      <span className="h-3 w-px bg-dark-600" />
       <span>{target.name}</span>
     </div>
   )
 
-  // 提示显示组件
   const HintsDisplay = () => {
     if (hintLevel === 0 || revealed) return null
     
     const visibleHints = target.hints.slice(0, hintLevel)
     
     return (
-      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 shadow-sm backdrop-blur dark:border-amber-900/40 dark:bg-amber-950/30">
-        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-200">
+      <div className="mt-3 rounded-xl border border-amber-900/40 bg-amber-950/30 p-3 shadow-sm backdrop-blur">
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-amber-200">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M12 12a4 4 0 100-8 4 4 0 000 8z" />
           </svg>
@@ -221,10 +244,10 @@ export function PuzzleTest() {
           {visibleHints.map((hint, index) => (
             <li 
               key={index} 
-              className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-100 animate-in fade-in slide-in-from-left-2 duration-300"
+              className="flex items-start gap-2 text-sm text-amber-100 animate-in fade-in slide-in-from-left-2 duration-300"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-amber-800 dark:bg-amber-800 dark:text-amber-200">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-800 text-xs font-bold text-amber-200">
                 {index + 1}
               </span>
               <span>{hint}</span>
@@ -237,14 +260,14 @@ export function PuzzleTest() {
 
   const answerImage = revealed ? (
     <div className="mt-4 flex flex-col items-center">
-      <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-md dark:border-slate-800 dark:bg-slate-950 sm:h-56 sm:w-56">
+      <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden rounded-2xl border border-dark-600 bg-dark-900 p-2 shadow-md sm:h-56 sm:w-56">
         {imageLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm dark:bg-slate-950/80">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-dark-900/80 backdrop-blur-sm">
             <div className="relative h-12 w-12">
-              <div className="absolute inset-0 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-500 dark:border-slate-700 dark:border-t-indigo-400" />
-              <div className="absolute inset-2 animate-spin rounded-full border-4 border-slate-200 border-b-fuchsia-500 dark:border-slate-700 dark:border-b-fuchsia-400" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+              <div className="absolute inset-0 animate-spin rounded-full border-4 border-dark-600 border-t-indigo-400" />
+              <div className="absolute inset-2 animate-spin rounded-full border-4 border-dark-600 border-b-fuchsia-400" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
             </div>
-            <span className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">加载中...</span>
+            <span className="mt-3 text-xs font-medium text-slate-400">加载中...</span>
           </div>
         )}
         <img
@@ -259,58 +282,54 @@ export function PuzzleTest() {
           }}
         />
       </div>
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{target.franchise} · {target.publisher}</p>
+      <p className="mt-2 text-sm text-slate-400">{target.franchise} · {target.publisher}</p>
     </div>
   ) : null
 
   return (
     <main className="px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto max-w-5xl">
-        <header className="relative rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/40 sm:p-8">
-          {/* 背景光晕单独一层，避免 overflow-hidden 截断内容 */}
+        <header className="relative rounded-3xl border border-dark-600 bg-dark-800/40 p-6 shadow-sm backdrop-blur sm:p-8">
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
             <div
               aria-hidden="true"
-              className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-indigo-300/35 via-fuchsia-300/25 to-sky-300/35 blur-3xl dark:from-indigo-500/15 dark:via-fuchsia-500/10 dark:to-sky-500/15"
+              className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-indigo-500/15 via-fuchsia-500/10 to-sky-500/15 blur-3xl"
             />
           </div>
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                <span className="rounded-full bg-slate-900/5 px-2 py-1 dark:bg-white/10">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                <span className="rounded-full bg-white/10 px-2 py-1">
                   演示
                 </span>
-                <span className="rounded-full bg-slate-900/5 px-2 py-1 dark:bg-white/10">
+                <span className="rounded-full bg-white/10 px-2 py-1">
                   已猜 {guesses.length} 次
                 </span>
-                <span className="rounded-full bg-slate-900/5 px-2 py-1 dark:bg-white/10">
+                <span className="rounded-full bg-white/10 px-2 py-1">
                   {status === 'playing' ? '进行中' : status === 'won' ? '已猜中' : '已揭晓'}
                 </span>
               </div>
               <div className="mt-4">
                 <h1
-                  className="cursor-default select-none text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100"
+                  className="cursor-default select-none text-3xl font-semibold tracking-tight text-slate-100 sm:text-4xl"
                   onClick={handleTitleClick}
                   title={titleClickCount > 0 ? `再点击${5 - titleClickCount}次解锁答案` : ''}
                 >
                   <span className="relative inline-block">
                     猜电子游戏人物
 
-                    {/* 作弊气泡 */}
                     {showCheatBubble && (
                       <span className="absolute left-1/2 top-full z-20 mt-2 block -translate-x-1/2 whitespace-nowrap">
-                        <span className="relative flex items-center gap-1.5 rounded-full border border-fuchsia-200 bg-white px-3 py-1.5 shadow-lg dark:border-fuchsia-800 dark:bg-slate-900">
-                          {/* 小三角 */}
-                          <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-l border-t border-fuchsia-200 bg-white dark:border-fuchsia-800 dark:bg-slate-900" />
-
-                          <span className="relative text-xs text-slate-500 dark:text-slate-400">答案是</span>
-                          <span className="relative text-sm font-bold text-fuchsia-600 dark:text-fuchsia-400">{target.name}</span>
+                        <span className="relative flex items-center gap-1.5 rounded-full border border-fuchsia-800 bg-dark-900 px-3 py-1.5 shadow-lg">
+                          <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-l border-t border-fuchsia-800 bg-dark-900" />
+                          <span className="relative text-xs text-slate-400">答案是</span>
+                          <span className="relative text-sm font-bold text-fuchsia-400">{target.name}</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               setShowCheatBubble(false)
                             }}
-                            className="relative ml-1 rounded-full p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                            className="relative ml-1 rounded-full p-0.5 text-slate-500 hover:bg-dark-700 hover:text-slate-300"
                           >
                             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -322,7 +341,7 @@ export function PuzzleTest() {
                   </span>
                 </h1>
               </div>
-              <p className="mt-2 text-slate-600 dark:text-slate-300">
+              <p className="mt-2 text-slate-400">
                 输入人物名称，观察属性对比提示。
               </p>
               <div className="mt-4">{revealed ? answerBadge : null}</div>
@@ -335,14 +354,14 @@ export function PuzzleTest() {
                 type="button"
                 onClick={onReveal}
                 disabled={revealed}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                className="rounded-xl border border-dark-600 bg-dark-800 px-3 py-2 text-sm font-medium text-slate-100 shadow-sm transition hover:-translate-y-0.5 hover:bg-dark-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-60"
               >
                 查看答案
               </button>
               <button
                 type="button"
                 onClick={onNewPuzzle}
-                className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
+                className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-500 hover:shadow"
               >
                 换一道新题
               </button>
@@ -353,47 +372,93 @@ export function PuzzleTest() {
         <section className="mt-6 grid gap-4">
           <form
             onSubmit={onSubmitGuess}
-            className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/40"
+            className="relative z-20 rounded-2xl border border-dark-600 bg-dark-800/40 p-4 shadow-sm backdrop-blur"
           >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label className="flex-1">
-                <div className="mb-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              <label className="flex-1" ref={inputContainerRef}>
+                <div className="mb-1 text-sm font-medium text-slate-100">
                   你的猜测
                 </div>
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-0 transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-indigo-700 dark:focus:ring-indigo-950"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="输入人物名…"
-                  list="character-suggestions"
-                  disabled={status !== 'playing'}
-                />
-                <datalist id="character-suggestions">
-                  {suggestions.map((c) => (
-                    <option key={c.id} value={c.name} />
-                  ))}
-                </datalist>
+                <div className="relative">
+                  <input
+                    className="w-full rounded-xl border border-dark-600 bg-dark-900 px-3 py-2 text-sm text-slate-100 shadow-sm outline-none ring-0 transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-950"
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value)
+                      setShowDropdown(true)
+                      setSelectedIndex(-1)
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        setSelectedIndex((prev) => 
+                          prev < suggestions.length - 1 ? prev + 1 : prev
+                        )
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1))
+                      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                        e.preventDefault()
+                        setInput(suggestions[selectedIndex].name)
+                        setShowDropdown(false)
+                        setSelectedIndex(-1)
+                      } else if (e.key === 'Escape') {
+                        setShowDropdown(false)
+                      }
+                    }}
+                    placeholder="输入人物名…"
+                    disabled={status !== 'playing'}
+                    autoComplete="off"
+                  />
+                  {/* 下拉列表 - 放在输入框下方 */}
+                  {showDropdown && suggestions.length > 0 && (
+                    <div className="absolute z-[9999] mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-dark-600 bg-dark-800 shadow-2xl">
+                      {suggestions.map((c, index) => (
+                        <div
+                          key={c.id}
+                          className={`cursor-pointer px-3 py-2 text-sm transition ${
+                            index === selectedIndex
+                              ? 'bg-indigo-600 text-white'
+                              : 'text-slate-300 hover:bg-dark-700'
+                          }`}
+                          onClick={() => {
+                            setInput(c.name)
+                            setShowDropdown(false)
+                            setSelectedIndex(-1)
+                          }}
+                          onMouseEnter={() => setSelectedIndex(index)}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate">{c.name}</span>
+                            <span className="shrink-0 text-xs opacity-60">{c.franchise}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </label>
 
               <button
                 type="submit"
                 disabled={status !== 'playing'}
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-500 hover:shadow disabled:cursor-not-allowed disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-400 hover:shadow disabled:cursor-not-allowed disabled:opacity-60"
               >
                 猜！
               </button>
             </div>
 
             {error ? (
-              <div className="mt-3 text-sm text-rose-700 dark:text-rose-300">
+              <div className="mt-3 text-sm text-rose-300">
                 {error}
               </div>
             ) : null}
           </form>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/40">
+          <div className="relative z-10 overflow-x-auto rounded-2xl border border-dark-600 bg-dark-800/40 shadow-sm backdrop-blur">
             <table className="min-w-[980px] w-full text-left text-sm">
-              <thead className="border-b border-slate-200/70 text-xs text-slate-600 dark:border-slate-800/70 dark:text-slate-300">
+              <thead className="border-b border-dark-600/70 text-xs text-slate-300">
                 <tr>
                   {[
                     '姓名',
@@ -412,12 +477,12 @@ export function PuzzleTest() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800/70">
+              <tbody className="divide-y divide-dark-600/70">
                 {guesses.length === 0 ? (
                   <tr>
                     <td
                       colSpan={9}
-                      className="px-3 py-10 text-center text-slate-600 dark:text-slate-300"
+                      className="px-3 py-10 text-center text-slate-400"
                     >
                       还没有猜测记录，先输入一个人物名开始吧。
                     </td>
@@ -477,4 +542,3 @@ export function PuzzleTest() {
     </main>
   )
 }
-
