@@ -280,7 +280,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     imageUrl: 'https://ssb.wiki.gallery/images/thumb/0/08/Pac-Man.png/1200px-Pac-Man.png',
     gender: '男',
     origin: '吃豆人大陆',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['黄色圆形', '吃豆豆', '经典街机游戏'],
   },
   {
     id: 'lara-croft',
@@ -294,7 +294,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '英国',
     imageUrl: 'https://ssb.wiki.gallery/images/thumb/9/9f/Lara_Croft.png/1200px-Lara_Croft.png',
-    hints: ['黄色吃豆人', '吃豆豆', '经典街机游戏'],
+    hints: ['英国女考古学家', '双枪', '探索古墓'],
   },
   {
     id: 'master-chief',
@@ -308,7 +308,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '联合国太空司令部',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['考古学家', '双枪', '探索古墓'],
+    hints: ['拳套格斗家', '黑色长发', '第七天堂'],
   },
   {
     id: 'kratos',
@@ -378,7 +378,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '中国',
     imageUrl: 'https://ssb.wiki.gallery/images/thumb/a/a5/Chun-Li.png/1200px-Chun-Li.png',
-    hints: ['拳套格斗家', '黑发', '第七天堂'],
+    hints: ['三岛平八', '电风', '铁拳老大'],
   },
   {
     id: 'ryu',
@@ -742,7 +742,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '日本加州',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['刺猬头律师', '拍桌子', '异议阿里'],
   },
   {
     id: 'professor-layton',
@@ -756,7 +756,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '英国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['戴高帽的绅士', '解谜专家', '英国考古学家'],
   },
   {
     id: 'ezio-auditore',
@@ -770,7 +770,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '意大利',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['刺客大师', '意大利贵族', '袖剑'],
   },
   {
     id: 'altair',
@@ -784,7 +784,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '黎凡特',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['刺客大师', '白袍兜帽', '中东刺客'],
   },
   {
     id: 'rayman',
@@ -798,7 +798,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '梦幻之地',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['没有手脚', '悬浮的手脚', '育碧吉祥物'],
   },
   {
     id: 'steve',
@@ -812,7 +812,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '主世界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['方块人', '蓝色衬衫', '我的世界默认皮肤'],
   },
   {
     id: 'alex',
@@ -826,7 +826,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '主世界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['方块人', '绿色衬衫', '长发'],
   },
   {
     id: 'sans',
@@ -840,7 +840,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '地下世界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['骷髅', '蓝色夹克', '懒骨头'],
   },
   {
     id: 'frisk',
@@ -854,7 +854,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '地下世界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['条纹衫', '沉默的主角', '掉落地下世界'],
   },
   {
     id: 'cuphead',
@@ -868,7 +868,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '墨水瓶岛',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['茶杯做的头', '橡皮管动画风格', '与恶魔交易'],
   },
   {
     id: 'hollow-knight',
@@ -882,7 +882,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '其他',
     origin: '圣巢',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['白色面具', '没有声音', '探索地下王国'],
   },
   {
     id: 'hornet',
@@ -896,7 +896,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '圣巢',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['红色斗篷', '针线武器', '保护圣巢'],
   },
   {
     id: 'isaac',
@@ -910,7 +910,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '地下室',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['裸体的孩子', '眼泪当武器', '宗教寓言'],
   },
   {
     id: 'nathan-drake',
@@ -924,7 +924,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['宝藏猎人', '攀爬高手', '德雷克家族'],
   },
   {
     id: 'ellie',
@@ -938,7 +938,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['免疫病毒', '红色头发', '乔尔的养女'],
   },
   {
     id: 'joel',
@@ -952,7 +952,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['中年大叔', '走私客', '艾莉的养父'],
   },
   {
     id: 'aloy',
@@ -966,7 +966,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '诺拉族',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['红发弓箭手', '机械怪兽', '诺拉族被放逐者'],
   },
   {
     id: 'zelda-midna',
@@ -980,7 +980,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '黄昏领域',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['黄昏公主', '可以变身', '帮助林克'],
   },
   {
     id: 'dovahkiin',
@@ -994,7 +994,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '天际省',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['龙血', '吐目', '天际省英雄'],
   },
   {
     id: 'kelly-commander-shepard',
@@ -1008,7 +1008,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '星系联盟',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['N7装甲', '指挥官', '拯救银河系'],
   },
   {
     id: 'garrus',
@@ -1022,7 +1022,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '神堡',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['突锐人', '狙击高手', '薛帕德的挚友'],
   },
   {
     id: 'kirito',
@@ -1036,7 +1036,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '艾恩葛朗特',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['黑衣剑士', '二刀流', '被困在游戏中'],
   },
   {
     id: 'dante',
@@ -1050,7 +1050,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '红墓市',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['红色风衣', '银发', '双枪和大剑'],
   },
   {
     id: 'vergil',
@@ -1064,7 +1064,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '红墓市',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['蓝色风衣', '阎魔刀', '但丁的哥哥'],
   },
   {
     id: 'rick',
@@ -1078,7 +1078,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '地球',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['疯狂科学家', '蓝色头发', '平行宇宙'],
   },
   {
     id: 'sub-zero',
@@ -1092,7 +1092,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '阳间',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['蓝色忍者', '冰系能力', '林鬼教'],
   },
   {
     id: 'scorpion',
@@ -1106,7 +1106,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '阴间',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['黄色忍者', '火焰能力', 'Get over here'],
   },
   {
     id: 'raiden',
@@ -1120,7 +1120,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '阳间',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['雷神', '蓝色闪电', '宽边帽'],
   },
   {
     id: 'johnny-cage',
@@ -1134,7 +1134,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '阳间',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['动作明星', '墨镜', '蛋碎攻击'],
   },
   {
     id: 'saints-row-boss',
@@ -1148,7 +1148,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '斯提尔沃特',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['可自定义主角', '黑帮老大', '紫色'],
   },
   {
     id: 'sam-porter-bridges',
@@ -1162,7 +1162,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['快递员', 'BB', '连接美国'],
   },
   {
     id: 'big-daddy',
@@ -1176,7 +1176,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '销魂城',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['潜水服', '钻头', '保护小女孩'],
   },
   {
     id: 'big-sister',
@@ -1190,7 +1190,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '销魂城',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['潜水服', '收集者', '保护小女孩'],
   },
   {
     id: 'wander',
@@ -1204,7 +1204,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '禁忌之地',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['少年', '弓箭', '挑战巨像'],
   },
   {
     id: 'marth',
@@ -1218,7 +1218,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '阿卡奈亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['阿利提亚王子', '剑士', '火焰纹章系列'],
   },
   {
     id: 'ike',
@@ -1232,7 +1232,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '特利乌斯',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: [' mercenary', '大剑使用者', '火焰纹章系列'],
   },
   {
     id: 'lucina',
@@ -1246,7 +1246,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '伊利斯',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['面具剑士', '库洛姆的女儿', '火焰纹章觉醒'],
   },
   {
     id: 'bayonetta',
@@ -1260,7 +1260,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '维格利德',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['魔女', '手枪鞋', '长发当武器'],
   },
   {
     id: 'agent-fox',
@@ -1274,7 +1274,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '莱拉特星系',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['星际火狐队长', '阿瑞斯星飞行员', '任天堂角色'],
   },
   {
     id: 'falco',
@@ -1288,7 +1288,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '莱拉特星系',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['高傲的飞行员', '蓝羽', '星际火狐'],
   },
   {
     id: 'captain-falcon',
@@ -1302,7 +1302,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '银河系',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['F-Zero赛车手', '飞隼队长', 'FALCON PUNCH'],
   },
   {
     id: 'ness',
@@ -1316,7 +1316,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '鹰之国度',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['地球冒险', '棒球少年', '超能力PSI'],
   },
   {
     id: 'solidus',
@@ -1330,7 +1330,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '猎狐犬',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['雷电', '开膛手杰克', '合金装备2'],
   },
   {
     id: 'sackboy',
@@ -1344,7 +1344,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '其他',
     origin: '创造世界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['小小大星球', '麻布娃娃', '创意游戏主角'],
   },
   {
     id: 'spyro',
@@ -1358,7 +1358,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '龙族领域',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['紫色小龙', '喷火', '小龙斯派罗'],
   },
   {
     id: 'crash-bandicoot',
@@ -1372,7 +1372,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: 'N·理智岛',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['古惑狼', '旋转攻击', 'PS吉祥物'],
   },
   {
     id: 'jak',
@@ -1386,7 +1386,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '沙多佛村',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['杰克与达斯特', '金发少年', '变形武器'],
   },
   {
     id: 'daxter',
@@ -1400,7 +1400,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '沙多佛村',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['橙色 ottsel', '话痨伙伴', '杰克与达斯特'],
   },
   {
     id: 'ratchet',
@@ -1414,7 +1414,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '索拉纳星系',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['隆巴斯人', '机械天才', '瑞奇与叮当'],
   },
   {
     id: 'clank',
@@ -1428,7 +1428,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '索拉纳星系',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['小机器人', '背部喷射器', '瑞奇的搭档'],
   },
   {
     id: 'a2',
@@ -1442,7 +1442,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '尤尔哈',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['寄叶A型二号', '短发', '尼尔机械纪元'],
   },
   {
     id: 'joker-persona5',
@@ -1456,7 +1456,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '东京',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['心之怪盗', '雨宫莲', '女神异闻录5'],
   },
   {
     id: 'makoto-yuki',
@@ -1470,7 +1470,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '岩户台',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['蓝色头发', '结城理', '女神异闻录3'],
   },
   {
     id: 'sekiro',
@@ -1484,7 +1484,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '苇名',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['独臂忍者', '忍义手', '只狼影逝二度'],
   },
   {
     id: 'isshin',
@@ -1498,7 +1498,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '苇名',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['剑圣', '苇名一心', '只狼'],
   },
   {
     id: 'malenia',
@@ -1512,7 +1512,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '交界地',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['女武神', '水鸟乱舞', '艾尔登法环'],
   },
   {
     id: 'tarnished',
@@ -1526,7 +1526,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '交界地',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['褪色者', '艾尔登之王', '艾尔登法环'],
   },
   {
     id: 'arthur-elden',
@@ -1540,7 +1540,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '罗德兰',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['太阳战士', '赞美太阳', '黑暗之魂'],
   },
   {
     id: 'artorias',
@@ -1554,7 +1554,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '罗德兰',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['深渊漫步者', 'A大', '黑暗之魂'],
   },
   {
     id: 'pyramid-head',
@@ -1568,7 +1568,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '寂静岭',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['三角头', '大刀', '寂静岭'],
   },
   {
     id: 'james-sunderland',
@@ -1582,7 +1582,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '寂静岭',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['收到亡妻来信', '寂静岭2主角', '寂静岭'],
   },
   {
     id: 'leon-mk',
@@ -1596,7 +1596,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '阳间',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'subnautica-riley',
@@ -1610,7 +1610,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '4546B星球',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'jane-overwatch',
@@ -1624,7 +1624,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '法国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'genji',
@@ -1638,7 +1638,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '日本',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'hanzo',
@@ -1652,7 +1652,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '日本',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'dva',
@@ -1666,7 +1666,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '韩国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'arthur-botw',
@@ -1680,7 +1680,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '王国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'simon-belmont',
@@ -1694,7 +1694,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '瓦拉几亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'alucard',
@@ -1708,7 +1708,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '瓦拉几亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'richter-belmont',
@@ -1722,7 +1722,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '瓦拉几亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'rinoa',
@@ -1736,7 +1736,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '盖亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'noctis',
@@ -1750,7 +1750,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '艾奥斯',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'nier-replicant',
@@ -1764,7 +1764,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '地球',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'chrono',
@@ -1778,7 +1778,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '守护国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'sam-fisher',
@@ -1792,7 +1792,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'prince-of-persia',
@@ -1806,7 +1806,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '波斯',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'agent-sam',
@@ -1820,7 +1820,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '鹈鹕镇',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'farmer',
@@ -1834,7 +1834,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '鹈鹕镇',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'hades-zagreus',
@@ -1848,7 +1848,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '冥界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'hades-megara',
@@ -1862,7 +1862,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '冥界',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'celeste-madeline',
@@ -1876,7 +1876,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '加拿大',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'ori',
@@ -1890,7 +1890,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '其他',
     origin: '尼贝尔',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'shovel-knight',
@@ -1904,7 +1904,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '山谷',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'gla-dos',
@@ -1918,7 +1918,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '光圈科技',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'big-smoke',
@@ -1932,7 +1932,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'tom-nook',
@@ -1946,7 +1946,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '动物森友会',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'isabelle',
@@ -1960,7 +1960,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '动物森友会',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'villager',
@@ -1974,7 +1974,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '动物森友会',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'wario',
@@ -1988,7 +1988,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '蘑菇王国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'diddy-kong',
@@ -2002,7 +2002,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: 'DK岛',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'king-k-rool',
@@ -2016,7 +2016,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '鳄鱼岛',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'zelda-imp',
@@ -2030,7 +2030,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '海拉鲁',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'bowser-jr',
@@ -2044,7 +2044,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '蘑菇王国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'waluigi',
@@ -2058,7 +2058,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '蘑菇王国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'toad',
@@ -2072,7 +2072,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '蘑菇王国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'toadette',
@@ -2086,7 +2086,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '蘑菇王国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'wii-fit-trainer',
@@ -2100,7 +2100,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: 'Wii健身',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'inkling',
@@ -2114,7 +2114,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '墨鱼市',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'agent-3',
@@ -2128,7 +2128,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '墨鱼市',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'agent-8',
@@ -2142,7 +2142,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '墨鱼市',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'little-mac',
@@ -2156,7 +2156,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '美国',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'samus-dark',
@@ -2170,7 +2170,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '其他',
     origin: '塔隆四号',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'rabbid',
@@ -2184,7 +2184,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '未知',
     origin: '疯兔大陆',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'ezreal',
@@ -2198,7 +2198,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '皮尔特沃夫',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'jinx',
@@ -2212,7 +2212,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '祖安',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'ahri',
@@ -2226,7 +2226,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '女',
     origin: '艾欧尼亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'yasuo',
@@ -2240,7 +2240,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '艾欧尼亚',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
   {
     id: 'teemo',
@@ -2254,7 +2254,7 @@ export const GAME_CHARACTERS: GameCharacter[] = [
     gender: '男',
     origin: '班德尔城',
     imageUrl: 'https://img2.baidu.com/it/u=2185229574,2020794694&fm=253&fmt=auto&app=138&f=GIF?w=417&h=454',
-    hints: ['待补充提示1', '待补充提示2', '待补充提示3'],
+    hints: ['游戏角色', '提示待完善', '欢迎补充'],
   },
 ]
 
