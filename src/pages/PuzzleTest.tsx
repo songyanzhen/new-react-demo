@@ -122,6 +122,7 @@ export function PuzzleTest() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setImageLoading(true)
@@ -260,6 +261,41 @@ export function PuzzleTest() {
 
   const answerImage = revealed ? (
     <div className="mt-4 flex flex-col items-center">
+      {/* 胜利动画 */}
+      {status === 'won' && (
+        <div className="mb-4 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-orange-500/20 px-4 py-2 text-lg font-bold text-amber-300 animate-in zoom-in duration-500">
+            <svg className="h-6 w-6 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="bg-gradient-to-r from-yellow-300 via-amber-300 to-orange-300 bg-clip-text text-transparent">
+              🎉 恭喜你，猜对了！
+            </span>
+            <svg className="h-6 w-6 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          </div>
+          {/* 彩带动画 */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute animate-pulse"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 50}%`,
+                  animationDelay: `${i * 0.1}s`,
+                  animationDuration: '1s'
+                }}
+              >
+                <span className={['🎊', '🎉', '✨', '⭐', '🌟'][i % 5]} style={{ fontSize: `${Math.random() * 20 + 10}px` }}>
+                  {['🎊', '🎉', '✨', '⭐', '🌟'][i % 5]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden rounded-2xl border border-dark-600 bg-dark-900 p-2 shadow-md sm:h-56 sm:w-56">
         {imageLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-dark-900/80 backdrop-blur-sm">
@@ -273,7 +309,7 @@ export function PuzzleTest() {
         <img
           src={target.imageUrl}
           alt={target.name}
-          className="h-full w-full object-contain transition-opacity duration-300"
+          className={`h-full w-full object-contain transition-opacity duration-300 ${status === 'won' ? 'animate-in zoom-in duration-500' : ''}`}
           style={{ opacity: imageLoading ? 0 : 1 }}
           onLoad={() => setImageLoading(false)}
           onError={(e) => {
@@ -374,13 +410,14 @@ export function PuzzleTest() {
             onSubmit={onSubmitGuess}
             className="relative z-20 rounded-2xl border border-dark-600 bg-dark-800/40 p-4 shadow-sm backdrop-blur"
           >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex-1" ref={inputContainerRef}>
                 <div className="mb-1 text-sm font-medium text-slate-100">
                   你的猜测
                 </div>
                 <div className="relative">
                   <input
+                    ref={inputRef}
                     className="w-full rounded-xl border border-dark-600 bg-dark-900 px-3 py-2 text-sm text-slate-100 shadow-sm outline-none ring-0 transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-950"
                     value={input}
                     onChange={(e) => {
@@ -389,6 +426,7 @@ export function PuzzleTest() {
                       setSelectedIndex(-1)
                     }}
                     onFocus={() => setShowDropdown(true)}
+                    onClick={() => setShowDropdown(true)}
                     onKeyDown={(e) => {
                       if (e.key === 'ArrowDown') {
                         e.preventDefault()
@@ -422,10 +460,34 @@ export function PuzzleTest() {
                               ? 'bg-indigo-600 text-white'
                               : 'text-slate-300 hover:bg-dark-700'
                           }`}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setInput(c.name)
-                            setShowDropdown(false)
                             setSelectedIndex(-1)
+                            // 自动提交猜测
+                            if (status === 'playing') {
+                              const exact = GAME_CHARACTERS.find((char) => normalize(char.name) === normalize(c.name))
+                              if (exact && !guesses.some((g) => g.guess.id === exact.id)) {
+                                const result = compareGuess(target, exact)
+                                setGuesses((xs) => [result, ...xs])
+                                setError(null)
+                                if (result.isCorrect) {
+                                  setStatus('won')
+                                  setRevealed(true)
+                                } else {
+                                  setHintLevel((prev) => Math.min(prev + 1, 3))
+                                }
+                                setInput('')
+                              }
+                            }
+                            // 延迟关闭下拉框，确保输入框先获得焦点
+                            setTimeout(() => {
+                              setShowDropdown(false)
+                            }, 0)
                           }}
                           onMouseEnter={() => setSelectedIndex(index)}
                         >

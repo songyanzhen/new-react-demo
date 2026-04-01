@@ -24,7 +24,7 @@ function App() {
               to="/"
               className="font-semibold tracking-tight text-slate-100 hover:text-slate-300 transition"
             >
-              new-react-demo
+              S哥的快乐小屋
             </Link>
             <div className="flex items-center gap-2">
               <Link
