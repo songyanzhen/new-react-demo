@@ -1,5 +1,7 @@
 import type { FormEvent } from 'react'
+import { GAME_CHARACTERS } from '../../data/gameCharacters'
 import { usePuzzleGame } from './hooks/usePuzzleGame'
+import { normalize } from './utils'
 import {
   AnswerBadge,
   AnswerImage,
@@ -19,6 +21,7 @@ function PuzzleTest() {
     input,
     setInput,
     error,
+    setError,
     guesses,
     hintLevel,
     titleClickCount,
@@ -38,7 +41,18 @@ function PuzzleTest() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    // GuessInput 组件会自动处理提交
+    if (status !== 'playing') return
+
+    const q = normalize(input)
+    if (!q) return
+
+    const exact = GAME_CHARACTERS.find((c) => normalize(c.name) === q)
+    if (!exact) {
+      setError('人物库中没有找到该名称，请从下拉建议中选择。')
+      return
+    }
+
+    onSubmitGuess(exact)
   }
 
   return (
