@@ -1,7 +1,7 @@
 import { Link, Route, Routes } from 'react-router-dom'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
-import { PuzzleTest } from './pages/PuzzleTest'
+import { PuzzleTest } from './pages/PuzzleTest/index'
 
 function App() {
   return (
