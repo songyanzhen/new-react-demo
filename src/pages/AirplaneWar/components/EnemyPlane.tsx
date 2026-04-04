@@ -10,7 +10,6 @@ interface EnemyPlaneProps {
 
 export function EnemyPlane({ x, y, width, height, type, hp, maxHp }: EnemyPlaneProps) {
   const centerX = x + width / 2
-  const centerY = y + height / 2
   
   // 根据类型设置颜色
   const getColors = () => {

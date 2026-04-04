@@ -8,22 +8,28 @@ interface PlayerPlaneProps {
 
 export function PlayerPlane({ x, y, width, height, engineFrame = 0 }: PlayerPlaneProps) {
   const centerX = x + width / 2
-  const centerY = y + height / 2
   
-  // 引擎火焰动画
-  const flameHeight = 15 + (engineFrame % 5) * 3
+  // 简化引擎火焰 - 使用预设值减少计算
+  const flameIndex = engineFrame % 4
+  const flameSizes = [12, 15, 18, 15]
+  const flameHeight = flameSizes[flameIndex]
   
   return (
     <g>
-      {/* 引擎火焰 - 外层 */}
-      <path
-        d={`M ${centerX - 6} ${y + height - 5} Q ${centerX} ${y + height + flameHeight} ${centerX + 6} ${y + height - 5}`}
+      {/* 引擎火焰 - 简化 */}
+      <ellipse
+        cx={centerX}
+        cy={y + height + flameHeight / 2 - 3}
+        rx={8}
+        ry={flameHeight / 2}
         fill="#f59e0b"
-        opacity={0.8}
+        opacity={0.7}
       />
-      {/* 引擎火焰 - 内层 */}
-      <path
-        d={`M ${centerX - 3} ${y + height - 5} Q ${centerX} ${y + height + flameHeight * 0.6} ${centerX + 3} ${y + height - 5}`}
+      <ellipse
+        cx={centerX}
+        cy={y + height + flameHeight / 3 - 3}
+        rx={4}
+        ry={flameHeight / 3}
         fill="#fef3c7"
         opacity={0.9}
       />

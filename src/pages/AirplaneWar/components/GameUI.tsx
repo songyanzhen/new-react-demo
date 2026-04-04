@@ -41,6 +41,33 @@ export function GameUI({ status, score, gameTime, player, onStart, onPause }: Ga
             ))}
           </div>
         </div>
+        
+        {/* 护盾显示 */}
+        {(player.shield || 0) > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-400">护盾:</span>
+            <div className="flex gap-1">
+              {Array.from({ length: player.shield || 0 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-4 w-4 rounded-full bg-blue-500 ring-2 ring-blue-300"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* 火力等级显示 */}
+        {(player.powerLevel || 0) > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-400">火力:</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: player.powerLevel || 0 }).map((_, i) => (
+                <span key={i} className="text-amber-400">🔥</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 游戏控制按钮 */}
@@ -91,11 +118,25 @@ export function GameUI({ status, score, gameTime, player, onStart, onPause }: Ga
       {/* 操作说明 */}
       <div className="rounded-xl border border-dark-600/50 bg-dark-800/40 p-4 text-sm text-slate-400">
         <div className="mb-2 font-medium text-slate-300">操作说明:</div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 mb-3">
           <div>↑↓←→ 或 WASD: 移动飞机</div>
           <div>空格键: 发射子弹</div>
           <div>ESC: 暂停游戏</div>
-          <div>收集道具: 恢复HP / 增强火力</div>
+        </div>
+        <div className="mb-2 font-medium text-slate-300">道具说明:</div>
+        <div className="flex gap-4 text-xs">
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+            <span>回血 (+1 HP)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+            <span>火力 (多发子弹)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+            <span>护盾 (抵挡伤害)</span>
+          </div>
         </div>
       </div>
     </div>

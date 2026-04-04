@@ -1,5 +1,5 @@
 // 游戏状态
-export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameOver'
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameOver' | 'bossWarning' | 'bossBattle' | 'bossExploding' | 'bossVictory' | 'playerExploding'
 
 // 位置
 export interface Position {
@@ -20,6 +20,8 @@ export interface Player {
   speed: number
   hp: number
   maxHp: number
+  powerLevel?: number
+  shield?: number // 护盾值
 }
 
 // 子弹
@@ -42,6 +44,24 @@ export interface Enemy {
   maxHp: number
   score: number
   type: 'normal' | 'fast' | 'tank'
+}
+
+// Boss类型
+export type BossType = 'destroyer' | 'phantom' | 'mothership' | 'overlord' | 'nova' | 'titan'
+
+// Boss
+export interface Boss {
+  id: string
+  position: Position
+  size: Size
+  speed: number
+  hp: number
+  maxHp: number
+  type: BossType
+  phase: number // 阶段（血量降低后可能变强）
+  lastShotTime: number
+  attackPattern: number // 攻击模式
+  scoreReward: number
 }
 
 // 道具
@@ -83,4 +103,19 @@ export interface KeyState {
   KeyA: boolean
   KeyD: boolean
   Space: boolean
+}
+
+// Boss配置
+export interface BossConfig {
+  name: string
+  description: string
+  size: Size
+  hp: number
+  speed: number
+  scoreReward: number
+  colors: {
+    main: string
+    dark: string
+    light: string
+  }
 }

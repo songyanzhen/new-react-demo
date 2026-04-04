@@ -4,11 +4,15 @@ import type {
   Player,
   Bullet,
   Enemy,
+  Boss,
   PowerUp,
   Explosion,
   KeyState,
+  BossType,
 } from '../types'
 import { generateId, checkCollision, clamp, randomInt } from '../utils'
+import { BOSS_CONFIGS, BOSS_SPAWN_THRESHOLD, getRandomBossType, getBossHpMultiplier, getBossAttackInterval } from '../data/bosses'
+import { calculateDifficulty } from '../data/difficulty'
 
 // 游戏配置常量
 const CANVAS_WIDTH = 400
@@ -19,8 +23,13 @@ const BULLET_SIZE = { width: 4, height: 12 }
 const BULLET_SPEED = 8
 const ENEMY_SIZE = { width: 30, height: 30 }
 const ENEMY_SPEED_BASE = 2
-const ENEMY_SPAWN_INTERVAL_BASE = 1500
 const POWERUP_SIZE = { width: 25, height: 25 }
+
+// 玩家配置
+const PLAYER_INITIAL_HP = 5
+const PLAYER_MAX_HP = 5
+const PLAYER_MAX_POWER = 3
+const PLAYER_BULLET_COOLDOWN = 120 // 毫秒，射速
 
 interface UseGameOptions {
   onShoot?: () => void
@@ -30,22 +39,35 @@ interface UseGameOptions {
   onDamage?: () => void
   onGameStart?: () => void
   onGameOver?: () => void
+  onBossVictory?: () => void
 }
 
 export function useGame(options: UseGameOptions = {}) {
-  const { onShoot, onHit, onExplosion, onPowerUp, onDamage, onGameStart, onGameOver } = options
+  const { 
+    onShoot, onHit, onExplosion, onPowerUp, onDamage, 
+    onGameStart, onGameOver, onBossVictory 
+  } = options
+
   // 游戏状态
   const [status, setStatus] = useState<GameStatus>('idle')
   const [score, setScore] = useState(0)
   const [gameTime, setGameTime] = useState(0)
+  
+  // Boss相关状态
+  const [boss, setBoss] = useState<Boss | null>(null)
+  const [bossDefeatedCount, setBossDefeatedCount] = useState(0)
+  const [scoreSinceLastBoss, setScoreSinceLastBoss] = useState(0)
+  const [pendingBossType, setPendingBossType] = useState<BossType | null>(null)
   
   // 玩家
   const [player, setPlayer] = useState<Player>({
     position: { x: CANVAS_WIDTH / 2 - PLAYER_SIZE.width / 2, y: CANVAS_HEIGHT - 80 },
     size: PLAYER_SIZE,
     speed: PLAYER_SPEED,
-    hp: 3,
-    maxHp: 3,
+    hp: PLAYER_INITIAL_HP,
+    maxHp: PLAYER_MAX_HP,
+    powerLevel: 0,
+    shield: 0,
   })
   
   // 游戏对象 - 用于渲染的 state
@@ -59,14 +81,19 @@ export function useGame(options: UseGameOptions = {}) {
   const enemiesRef = useRef<Enemy[]>([])
   const powerUpsRef = useRef<PowerUp[]>([])
   const explosionsRef = useRef<Explosion[]>([])
+  const bossRef = useRef<Boss | null>(null)
   const playerRef = useRef(player)
+  const scoreSinceLastBossRef = useRef(0)
+  const accumulatedScoreRef = useRef(0) // 用于追踪Boss触发
   
   // 同步 state 到 ref
   useEffect(() => { bulletsRef.current = bullets }, [bullets])
   useEffect(() => { enemiesRef.current = enemies }, [enemies])
   useEffect(() => { powerUpsRef.current = powerUps }, [powerUps])
   useEffect(() => { explosionsRef.current = explosions }, [explosions])
+  useEffect(() => { bossRef.current = boss }, [boss])
   useEffect(() => { playerRef.current = player }, [player])
+  useEffect(() => { scoreSinceLastBossRef.current = scoreSinceLastBoss }, [scoreSinceLastBoss])
   
   // 键盘状态
   const [keys, setKeys] = useState<KeyState>({
@@ -82,17 +109,22 @@ export function useGame(options: UseGameOptions = {}) {
   })
   
   // 用于游戏循环的 refs
-  const gameLoopRef = useRef<number>()
+  const gameLoopRef = useRef<number | undefined>(undefined)
   const lastTimeRef = useRef<number>(0)
   const enemySpawnTimerRef = useRef<number>(0)
   const powerUpSpawnTimerRef = useRef<number>(0)
   const bulletCooldownRef = useRef<number>(0)
+  const bossMovePhaseRef = useRef<number>(0) // Boss移动相位
 
   // 开始游戏
   const startGame = useCallback(() => {
     setStatus('playing')
     setScore(0)
     setGameTime(0)
+    setScoreSinceLastBoss(0)
+    setBossDefeatedCount(0)
+    setBoss(null)
+    setPendingBossType(null)
     setBullets([])
     setEnemies([])
     setPowerUps([])
@@ -101,12 +133,18 @@ export function useGame(options: UseGameOptions = {}) {
     enemiesRef.current = []
     powerUpsRef.current = []
     explosionsRef.current = []
+    bossRef.current = null
+    scoreSinceLastBossRef.current = 0
+    accumulatedScoreRef.current = 0
+    bossMovePhaseRef.current = 0
     setPlayer({
       position: { x: CANVAS_WIDTH / 2 - PLAYER_SIZE.width / 2, y: CANVAS_HEIGHT - 80 },
       size: PLAYER_SIZE,
       speed: PLAYER_SPEED,
-      hp: 3,
-      maxHp: 3,
+      hp: PLAYER_INITIAL_HP,
+      maxHp: PLAYER_MAX_HP,
+      powerLevel: 0,
+      shield: 0,
     })
     lastTimeRef.current = performance.now()
     enemySpawnTimerRef.current = 0
@@ -117,20 +155,117 @@ export function useGame(options: UseGameOptions = {}) {
 
   // 暂停/继续游戏
   const togglePause = useCallback(() => {
-    setStatus((prev) => (prev === 'playing' ? 'paused' : 'playing'))
+    setStatus((prev) => {
+      if (prev === 'playing') return 'paused'
+      if (prev === 'paused') return 'playing'
+      if (prev === 'bossBattle') return 'paused'
+      return prev
+    })
   }, [])
 
-  // 游戏结束
+  // 游戏结束 - 进入爆炸动画状态
   const gameOver = useCallback(() => {
-    setStatus('gameOver')
+    // 进入玩家爆炸状态
+    setStatus('playerExploding')
+    
+    // 停止游戏对象更新
     setBullets([])
     setEnemies([])
     setPowerUps([])
     bulletsRef.current = []
     enemiesRef.current = []
     powerUpsRef.current = []
-    onGameOver?.()
+    
+    // 延迟后显示游戏结束界面（等待爆炸动画）
+    setTimeout(() => {
+      setStatus('gameOver')
+      setBoss(null)
+      bossRef.current = null
+      onGameOver?.()
+    }, 1200) // 1.2秒爆炸动画
   }, [onGameOver])
+
+  // 触发Boss战
+  const triggerBossBattle = useCallback(() => {
+    const randomType = getRandomBossType()
+    setPendingBossType(randomType)
+    setStatus('bossWarning')
+    accumulatedScoreRef.current = 0 // 重置累积分数
+  }, [])
+
+  // 开始Boss战
+  const startBossBattle = useCallback(() => {
+    if (!pendingBossType) return
+    
+    const config = BOSS_CONFIGS[pendingBossType]
+    // Boss血量随击败次数增加
+    const hpMultiplier = getBossHpMultiplier(bossDefeatedCount)
+    const scaledHp = Math.floor(config.hp * hpMultiplier)
+    
+    const newBoss: Boss = {
+      id: generateId(),
+      position: { x: CANVAS_WIDTH / 2 - config.size.width / 2, y: -config.size.height },
+      size: config.size,
+      speed: config.speed,
+      hp: scaledHp,
+      maxHp: scaledHp,
+      type: pendingBossType,
+      phase: 1,
+      lastShotTime: 0,
+      attackPattern: 0,
+      scoreReward: config.scoreReward,
+    }
+    
+    setBoss(newBoss)
+    bossRef.current = newBoss
+    bossMovePhaseRef.current = 0
+    setStatus('bossBattle')
+    setPendingBossType(null)
+    // 清理场上的敌机
+    setEnemies([])
+    enemiesRef.current = []
+  }, [pendingBossType])
+
+  // Boss被击败 - 进入爆炸动画状态
+  const defeatBoss = useCallback(() => {
+    const currentBoss = bossRef.current
+    if (!currentBoss) return
+
+    // 进入爆炸状态
+    setStatus('bossExploding')
+    
+    // 给予奖励
+    setScore((s) => s + currentBoss.scoreReward)
+    
+    // 恢复玩家部分HP（+2，不超过最大值的80%）
+    setPlayer((prev) => ({ 
+      ...prev, 
+      hp: Math.min(prev.hp + 2, Math.floor(prev.maxHp * 0.8))
+    }))
+    
+    // 清理场上的所有子弹和敌机（防止击败Boss后立刻受伤）
+    setBullets([])
+    setEnemies([])
+    bulletsRef.current = []
+    enemiesRef.current = []
+    
+    // 延迟后显示胜利界面（等待爆炸动画）
+    setTimeout(() => {
+      setStatus('bossVictory')
+      onBossVictory?.()
+      
+      // 延迟后恢复游戏
+      setTimeout(() => {
+        setBoss(null)
+        bossRef.current = null
+        setBossDefeatedCount((c) => c + 1)
+        setScoreSinceLastBoss(0)
+        scoreSinceLastBossRef.current = 0
+        accumulatedScoreRef.current = 0
+        setStatus('playing')
+      }, 3000)
+    }, 1000) // 1秒后显示胜利界面
+  }, [onBossVictory])
 
   // 键盘事件处理
   useEffect(() => {
@@ -147,7 +282,7 @@ export function useGame(options: UseGameOptions = {}) {
         e.preventDefault()
         setKeys((k) => ({ ...k, Space: true }))
       }
-      if (e.code === 'Escape' && status === 'playing') {
+      if (e.code === 'Escape' && (status === 'playing' || status === 'bossBattle')) {
         togglePause()
       }
     }
@@ -174,16 +309,32 @@ export function useGame(options: UseGameOptions = {}) {
 
   // 游戏主循环
   useEffect(() => {
-    if (status !== 'playing') {
+    // 爆炸状态也需要渲染动画
+    const isExploding = status === 'bossExploding' || status === 'playerExploding'
+    
+    if (status !== 'playing' && status !== 'bossBattle' && !isExploding) {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current)
       }
       return
     }
 
+    const isBossBattle = status === 'bossBattle' || status === 'bossExploding'
+
     const gameLoop = (currentTime: number) => {
       const deltaTime = currentTime - lastTimeRef.current
       lastTimeRef.current = currentTime
+
+      // 爆炸状态只更新爆炸效果
+      if (isExploding) {
+        setExplosions((prev) => 
+          prev
+            .map((exp) => ({ ...exp, duration: exp.duration - deltaTime }))
+            .filter((exp) => exp.duration > 0)
+        )
+        gameLoopRef.current = requestAnimationFrame(gameLoop)
+        return
+      }
 
       // 更新游戏时间
       setGameTime((prev) => prev + deltaTime)
@@ -193,6 +344,7 @@ export function useGame(options: UseGameOptions = {}) {
       let currentEnemies = enemiesRef.current
       let currentPowerUps = powerUpsRef.current
       let currentExplosions = explosionsRef.current
+      let currentBoss = bossRef.current
       const currentPlayer = playerRef.current
 
       // 更新玩家位置
@@ -217,20 +369,132 @@ export function useGame(options: UseGameOptions = {}) {
       // 发射子弹
       let hasShot = false
       bulletCooldownRef.current += deltaTime
-      if (keys.Space && bulletCooldownRef.current > 150) {
+      if (keys.Space && bulletCooldownRef.current > PLAYER_BULLET_COOLDOWN) {
         bulletCooldownRef.current = 0
-        const newBullet: Bullet = {
-          id: generateId(),
-          position: {
-            x: currentPlayer.position.x + currentPlayer.size.width / 2 - BULLET_SIZE.width / 2,
-            y: currentPlayer.position.y,
-          },
-          size: BULLET_SIZE,
-          speed: BULLET_SPEED,
-          damage: 1,
-          isPlayerBullet: true,
+        const powerLevel = currentPlayer.powerLevel || 0
+        // 火力等级伤害：0级=1，1级=2，2级=3，3级=5
+        const damage = powerLevel >= 3 ? 5 : (1 + powerLevel)
+        const newBullets: Bullet[] = []
+        
+        // 根据火力等级发射不同数量/类型的子弹
+        if (powerLevel === 0) {
+          // 普通子弹 - 1发居中
+          newBullets.push({
+            id: generateId(),
+            position: {
+              x: currentPlayer.position.x + currentPlayer.size.width / 2 - BULLET_SIZE.width / 2,
+              y: currentPlayer.position.y,
+            },
+            size: BULLET_SIZE,
+            speed: BULLET_SPEED,
+            damage,
+            isPlayerBullet: true,
+          })
+        } else if (powerLevel === 1) {
+          // 2发子弹 - 稍微分散
+          newBullets.push(
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x + 5, y: currentPlayer.position.y + 3 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            },
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x + currentPlayer.size.width - 10, y: currentPlayer.position.y + 3 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            }
+          )
+        } else if (powerLevel === 2) {
+          // 3发子弹（中间+两侧）
+          newBullets.push(
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x + currentPlayer.size.width / 2 - BULLET_SIZE.width / 2, y: currentPlayer.position.y },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            },
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x + 3, y: currentPlayer.position.y + 5 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            },
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x + currentPlayer.size.width - 8, y: currentPlayer.position.y + 5 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            }
+          )
+        } else {
+          // 满级火力 - 5发扇形 + 伤害提升到5
+          const centerX = currentPlayer.position.x + currentPlayer.size.width / 2
+          const baseY = currentPlayer.position.y
+          // 中间3发直行
+          newBullets.push(
+            {
+              id: generateId(),
+              position: { x: centerX - BULLET_SIZE.width / 2, y: baseY },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED + 1,
+              damage,
+              isPlayerBullet: true,
+            },
+            {
+              id: generateId(),
+              position: { x: centerX - 15, y: baseY + 5 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            },
+            {
+              id: generateId(),
+              position: { x: centerX + 10, y: baseY + 5 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED,
+              damage,
+              isPlayerBullet: true,
+            }
+          )
+          // 两侧2发偏斜（通过位置偏移实现）
+          newBullets.push(
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x, y: baseY + 10 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED - 0.5,
+              damage,
+              isPlayerBullet: true,
+            },
+            {
+              id: generateId(),
+              position: { x: currentPlayer.position.x + currentPlayer.size.width - 5, y: baseY + 10 },
+              size: BULLET_SIZE,
+              speed: BULLET_SPEED - 0.5,
+              damage,
+              isPlayerBullet: true,
+            }
+          )
         }
-        currentBullets = [...currentBullets, newBullet]
+        
+        // 限制子弹数量防止性能问题（最多50发玩家子弹）
+        const playerBulletCount = currentBullets.filter(b => b.isPlayerBullet).length
+        if (playerBulletCount < 50) {
+          currentBullets = [...currentBullets, ...newBullets]
+        }
         hasShot = true
       }
       
@@ -238,64 +502,328 @@ export function useGame(options: UseGameOptions = {}) {
         onShoot?.()
       }
 
-      // 生成敌机
-      const difficultyMultiplier = 1 + Math.floor(score / 1000) * 0.1
-      enemySpawnTimerRef.current += deltaTime
-      if (enemySpawnTimerRef.current > ENEMY_SPAWN_INTERVAL_BASE / difficultyMultiplier) {
-        enemySpawnTimerRef.current = 0
-        const enemyType = randomInt(1, 10)
-        let type: Enemy['type'] = 'normal'
-        let hp = 1
-        let speed = ENEMY_SPEED_BASE * difficultyMultiplier
-        let scoreValue = 10
-
-        if (enemyType === 9) {
-          type = 'fast'
-          hp = 1
-          speed *= 2
-          scoreValue = 20
-        } else if (enemyType === 10) {
-          type = 'tank'
-          hp = 3
-          speed *= 0.5
-          scoreValue = 50
+      // Boss战逻辑
+      if (isBossBattle && currentBoss) {
+        // Boss入场动画
+        const targetY = 80 // Boss停留的Y位置
+        if (currentBoss.position.y < targetY) {
+          currentBoss = {
+            ...currentBoss,
+            position: {
+              ...currentBoss.position,
+              y: Math.min(targetY, currentBoss.position.y + 3),
+            },
+          }
+        } else {
+          // Boss移动模式 - 使用平滑的正弦波移动
+          bossMovePhaseRef.current += deltaTime * 0.001 * currentBoss.speed
+          
+          // 计算目标位置（不考虑边界）
+          const time = bossMovePhaseRef.current
+          const moveWidth = CANVAS_WIDTH - currentBoss.size.width - 60 // 留出60px边距
+          const targetX = 30 + moveWidth / 2 + Math.sin(time) * (moveWidth / 2)
+          const targetY = 80 + Math.sin(time * 1.3) * 15
+          
+          // 平滑插值到目标位置
+          const smoothFactor = 0.08 // 插值系数，越小越平滑
+          const newX = currentBoss.position.x + (targetX - currentBoss.position.x) * smoothFactor
+          const newY = currentBoss.position.y + (targetY - currentBoss.position.y) * smoothFactor
+          
+          currentBoss = {
+            ...currentBoss,
+            position: {
+              x: newX,
+              y: newY,
+            },
+          }
         }
 
-        const newEnemy: Enemy = {
-          id: generateId(),
-          position: { x: randomInt(0, CANVAS_WIDTH - ENEMY_SIZE.width), y: -ENEMY_SIZE.height },
-          size: ENEMY_SIZE,
-          speed,
-          hp,
-          maxHp: hp,
-          score: scoreValue,
-          type,
+        // Boss射击 - 使用动态攻击间隔
+        currentBoss.lastShotTime += deltaTime
+        const attackInterval = getBossAttackInterval(bossDefeatedCount)
+        if (currentBoss.lastShotTime > attackInterval) {
+          currentBoss.lastShotTime = 0
+          
+          // 根据类型发射不同子弹
+          if (currentBoss.type === 'destroyer') {
+            // 毁灭者：散射5发子弹（扇形，左右展开）
+            const spreadAngles = [-0.3, -0.15, 0, 0.15, 0.3] // 弧度，约±17度
+            for (let i = 0; i < 5; i++) {
+              const angle = spreadAngles[i]
+              const speed = 5
+              const newBullet: Bullet = {
+                id: generateId(),
+                position: {
+                  x: currentBoss.position.x + currentBoss.size.width / 2,
+                  y: currentBoss.position.y + currentBoss.size.height,
+                },
+                size: { width: 6, height: 12 },
+                speed: speed,
+                damage: 1,
+                isPlayerBullet: false,
+                // 添加速度向量用于斜向子弹
+                velocityX: Math.sin(angle) * speed,
+                velocityY: Math.cos(angle) * speed,
+              }
+              currentBullets = [...currentBullets, newBullet]
+            }
+          } else if (currentBoss.type === 'phantom') {
+            // 幽灵战机：快速连续5发 + 追踪玩家方向 + 随机散布
+            const playerX = playerRef.current.position.x + playerRef.current.size.width / 2
+            const bossCenterX = currentBoss.position.x + currentBoss.size.width / 2
+            const baseOffset = playerX > bossCenterX ? 20 : -20
+            
+            for (let i = 0; i < 5; i++) {
+              const randomOffset = (Math.random() - 0.5) * 30
+              const angle = (baseOffset > 0 ? 0.1 : -0.1) + (Math.random() - 0.5) * 0.2
+              const speed = 6 + i * 0.5
+              const newBullet: Bullet = {
+                id: generateId(),
+                position: {
+                  x: currentBoss.position.x + currentBoss.size.width / 2 + baseOffset * (i - 2) * 0.5 + randomOffset,
+                  y: currentBoss.position.y + currentBoss.size.height,
+                },
+                size: { width: 5, height: 14 },
+                speed: speed,
+                damage: 1,
+                isPlayerBullet: false,
+                velocityX: Math.sin(angle) * speed,
+                velocityY: Math.cos(angle) * speed,
+              }
+              currentBullets = [...currentBullets, newBullet]
+            }
+          } else if (currentBoss.type === 'mothership') {
+            // 母舰：召唤小兵 + 激光束
+            const laserBullet: Bullet = {
+              id: generateId(),
+              position: {
+                x: currentBoss.position.x + currentBoss.size.width / 2 - 10,
+                y: currentBoss.position.y + currentBoss.size.height,
+              },
+              size: { width: 20, height: 30 },
+              speed: 4,
+              damage: 1,
+              isPlayerBullet: false,
+            }
+            currentBullets = [...currentBullets, laserBullet]
+            
+            if (Math.random() < 0.4) {
+              const newEnemy: Enemy = {
+                id: generateId(),
+                position: { 
+                  x: randomInt(0, CANVAS_WIDTH - ENEMY_SIZE.width), 
+                  y: -ENEMY_SIZE.height 
+                },
+                size: ENEMY_SIZE,
+                speed: ENEMY_SPEED_BASE * 1.5,
+                hp: 1,
+                maxHp: 1,
+                score: 5,
+                type: 'fast',
+              }
+              currentEnemies = [...currentEnemies, newEnemy]
+            }
+          } else if (currentBoss.type === 'overlord') {
+            // 虫群主宰：喷吐毒液（散射）+ 召唤虫群
+            for (let i = -1; i <= 1; i++) {
+              const newBullet: Bullet = {
+                id: generateId(),
+                position: {
+                  x: currentBoss.position.x + currentBoss.size.width / 2 + i * 15,
+                  y: currentBoss.position.y + currentBoss.size.height,
+                },
+                size: { width: 10, height: 14 },
+                speed: 4 + Math.abs(i),
+                damage: 1,
+                isPlayerBullet: false,
+              }
+              currentBullets = [...currentBullets, newBullet]
+            }
+            if (Math.random() < 0.5) {
+              for (let i = 0; i < 2; i++) {
+                const newEnemy: Enemy = {
+                  id: generateId(),
+                  position: { 
+                    x: randomInt(0, CANVAS_WIDTH - ENEMY_SIZE.width), 
+                    y: -ENEMY_SIZE.height 
+                  },
+                  size: { width: 20, height: 20 },
+                  speed: ENEMY_SPEED_BASE * 2,
+                  hp: 1,
+                  maxHp: 1,
+                  score: 3,
+                  type: 'fast',
+                }
+                currentEnemies = [...currentEnemies, newEnemy]
+              }
+            }
+          } else if (currentBoss.type === 'nova') {
+            // 新星核心：真正的8方向旋转射线
+            currentBoss.attackPattern = (currentBoss.attackPattern + 1) % 8
+            const baseAngle = (currentBoss.attackPattern / 8) * Math.PI * 2
+            const directions = 8
+            
+            for (let i = 0; i < directions; i++) {
+              const angle = baseAngle + (i / directions) * Math.PI * 2
+              const speed = 5
+              const newBullet: Bullet = {
+                id: generateId(),
+                position: {
+                  x: currentBoss.position.x + currentBoss.size.width / 2,
+                  y: currentBoss.position.y + currentBoss.size.height / 2,
+                },
+                size: { width: 8, height: 16 },
+                speed: speed,
+                damage: 1,
+                isPlayerBullet: false,
+                velocityX: Math.cos(angle) * speed,
+                velocityY: Math.sin(angle) * speed,
+              }
+              currentBullets = [...currentBullets, newBullet]
+            }
+          } else if (currentBoss.type === 'titan') {
+            // 远古泰坦：巨石投掷（慢速大子弹）
+            const playerX = playerRef.current.position.x + playerRef.current.size.width / 2
+            const bossCenterX = currentBoss.position.x + currentBoss.size.width / 2
+            const targetOffset = playerX > bossCenterX ? 20 : -20
+            
+            const boulder: Bullet = {
+              id: generateId(),
+              position: {
+                x: currentBoss.position.x + currentBoss.size.width / 2 + targetOffset,
+                y: currentBoss.position.y + currentBoss.size.height,
+              },
+              size: { width: 24, height: 24 },
+              speed: 3,
+              damage: 2,
+              isPlayerBullet: false,
+            }
+            currentBullets = [...currentBullets, boulder]
+            
+            // 两侧小石子
+            const pebble1: Bullet = {
+              id: generateId(),
+              position: {
+                x: currentBoss.position.x + 20,
+                y: currentBoss.position.y + currentBoss.size.height - 10,
+              },
+              size: { width: 10, height: 10 },
+              speed: 5,
+              damage: 1,
+              isPlayerBullet: false,
+            }
+            const pebble2: Bullet = {
+              id: generateId(),
+              position: {
+                x: currentBoss.position.x + currentBoss.size.width - 30,
+                y: currentBoss.position.y + currentBoss.size.height - 10,
+              },
+              size: { width: 10, height: 10 },
+              speed: 5,
+              damage: 1,
+              isPlayerBullet: false,
+            }
+            currentBullets = [...currentBullets, pebble1, pebble2]
+          }
         }
-        currentEnemies = [...currentEnemies, newEnemy]
+
+        // 更新Boss状态
+        bossRef.current = currentBoss
+        setBoss(currentBoss)
       }
 
-      // 生成道具
+      // 非Boss战时生成敌机（使用动态难度）
+      if (!isBossBattle) {
+        const difficulty = calculateDifficulty(score)
+        enemySpawnTimerRef.current += deltaTime
+        if (enemySpawnTimerRef.current > difficulty.enemySpawnRate) {
+          enemySpawnTimerRef.current = 0
+          const enemyType = randomInt(1, 10)
+          let type: Enemy['type'] = 'normal'
+          let hp = 1
+          let speed = ENEMY_SPEED_BASE * difficulty.enemySpeedMultiplier
+          let scoreValue = Math.floor(10 * difficulty.enemyScoreMultiplier)
+
+          if (enemyType === 9) {
+            type = 'fast'
+            hp = 1
+            speed *= 2
+            scoreValue = Math.floor(20 * difficulty.enemyScoreMultiplier)
+          } else if (enemyType === 10) {
+            type = 'tank'
+            hp = Math.floor(3 * difficulty.enemyHpMultiplier)
+            speed *= 0.5
+            scoreValue = Math.floor(50 * difficulty.enemyScoreMultiplier)
+          } else {
+            // 普通敌机也可能根据难度增加血量
+            if (difficulty.enemyHpMultiplier > 1.5) {
+              hp = Math.floor(1 * (difficulty.enemyHpMultiplier * 0.7))
+            }
+          }
+
+          const newEnemy: Enemy = {
+            id: generateId(),
+            position: { x: randomInt(0, CANVAS_WIDTH - ENEMY_SIZE.width), y: -ENEMY_SIZE.height },
+            size: ENEMY_SIZE,
+            speed,
+            hp: Math.max(1, hp),
+            maxHp: Math.max(1, hp),
+            score: scoreValue,
+            type,
+          }
+          currentEnemies = [...currentEnemies, newEnemy]
+        }
+      }
+
+      // 生成道具（使用动态难度）- 难度越高生成越快
+      const difficulty = calculateDifficulty(score)
       powerUpSpawnTimerRef.current += deltaTime
-      if (powerUpSpawnTimerRef.current > 10000) {
+      if (powerUpSpawnTimerRef.current > difficulty.powerUpSpawnRate) {
         powerUpSpawnTimerRef.current = 0
-        const powerUpTypes: PowerUp['type'][] = ['heal', 'power', 'shield']
+        // 道具掉落加权：低血量时增加治疗掉落率
+        const playerHpRatio = currentPlayer.hp / currentPlayer.maxHp
+        let powerUpTypes: PowerUp['type'][]
+        if (playerHpRatio <= 0.3) {
+          // 低血量时60%概率掉落治疗
+          powerUpTypes = ['heal', 'heal', 'heal', 'power', 'shield']
+        } else if (currentPlayer.powerLevel >= PLAYER_MAX_POWER) {
+          // 满火力时减少火力道具，增加护盾
+          powerUpTypes = ['heal', 'shield', 'shield', 'power', 'heal']
+        } else {
+          powerUpTypes = ['heal', 'power', 'shield', 'heal', 'power']
+        }
         const newPowerUp: PowerUp = {
           id: generateId(),
           position: { x: randomInt(0, CANVAS_WIDTH - POWERUP_SIZE.width), y: -POWERUP_SIZE.height },
           size: POWERUP_SIZE,
           speed: 2,
-          type: powerUpTypes[randomInt(0, 2)],
+          type: powerUpTypes[randomInt(0, powerUpTypes.length - 1)],
         }
         currentPowerUps = [...currentPowerUps, newPowerUp]
       }
 
-      // 更新子弹位置
+      // 更新子弹位置 - 支持斜向子弹（velocityX/velocityY）
       currentBullets = currentBullets
-        .map((bullet) => ({
-          ...bullet,
-          position: { ...bullet.position, y: bullet.position.y - bullet.speed },
-        }))
-        .filter((bullet) => bullet.position.y > -bullet.size.height)
+        .map((bullet) => {
+          // 如果有速度向量则使用，否则按原逻辑直行
+          const vx = (bullet as any).velocityX || 0
+          const vy = (bullet as any).velocityY || (bullet.isPlayerBullet ? -bullet.speed : bullet.speed)
+          return {
+            ...bullet,
+            position: { 
+              x: bullet.position.x + vx, 
+              y: bullet.position.y + vy 
+            },
+          }
+        })
+        .filter((bullet) => {
+          // 扩大边界检查范围以适应斜向子弹
+          const margin = 50
+          if (bullet.isPlayerBullet) return bullet.position.y > -bullet.size.height - margin
+          return bullet.position.y < CANVAS_HEIGHT + bullet.size.height + margin &&
+                 bullet.position.x > -margin &&
+                 bullet.position.x < CANVAS_WIDTH + margin
+        })
 
       // 更新敌机位置
       currentEnemies = currentEnemies
@@ -318,74 +846,104 @@ export function useGame(options: UseGameOptions = {}) {
         .map((exp) => ({ ...exp, duration: exp.duration - deltaTime }))
         .filter((exp) => exp.duration > 0)
 
-      // 碰撞检测 - 子弹击中敌机
-      const remainingBullets: Bullet[] = []
-      const remainingEnemies: Enemy[] = []
-      let scoreDelta = 0
-      const newExplosions: Explosion[] = []
+      // 碰撞检测 - 子弹击中Boss（Boss战时也检测小怪）
+      if (isBossBattle && currentBoss) {
+        let bossHit = false
+        const remainingBullets: Bullet[] = []
+        let updatedBoss = currentBoss
 
-      // 标记哪些子弹已经被使用
-      const bulletUsed = new Set<string>()
+        currentBullets.forEach((bullet) => {
+          if (bullet.isPlayerBullet && checkCollision(bullet.position, bullet.size, updatedBoss.position, updatedBoss.size)) {
+            bossHit = true
+            updatedBoss = { ...updatedBoss, hp: updatedBoss.hp - bullet.damage }
+          } else {
+            remainingBullets.push(bullet)
+          }
+        })
 
-      let hasHit = false
-      let hasExplosion = false
-      
-      currentEnemies.forEach((enemy) => {
-        let enemyHp = enemy.hp
-        let hit = false
+        currentBullets = remainingBullets
 
-        for (const bullet of currentBullets) {
-          if (bulletUsed.has(bullet.id)) continue
-          
-          if (checkCollision(bullet.position, bullet.size, enemy.position, enemy.size)) {
-            enemyHp -= bullet.damage
-            bulletUsed.add(bullet.id)
-            hit = true
-            hasHit = true
-            if (enemyHp <= 0) break
+        if (bossHit) {
+          onHit?.()
+          if (updatedBoss.hp <= 0) {
+            defeatBoss()
+            currentBoss = null
+          } else {
+            currentBoss = updatedBoss
+            bossRef.current = updatedBoss
+            setBoss(updatedBoss)
           }
         }
+      }
 
-        if (enemyHp <= 0) {
-          scoreDelta += enemy.score
-          newExplosions.push({
-            id: generateId(),
-            position: enemy.position,
-            size: enemy.size,
-            duration: 300,
-            maxDuration: 300,
+      // 碰撞检测 - 子弹击中敌机（包括Boss战时的小怪）
+        let hasHit = false
+        let hasExplosion = false
+        let scoreDelta = 0
+        const newExplosions: Explosion[] = []
+        
+        // 预过滤玩家子弹，减少遍历
+        const playerBullets = currentBullets.filter(b => b.isPlayerBullet)
+        const playerBulletIds = new Set<string>()
+        
+        // 检查每个敌机与玩家子弹的碰撞
+        currentEnemies = currentEnemies.map((enemy) => {
+          let enemyHp = enemy.hp
+          
+          for (const bullet of playerBullets) {
+            if (playerBulletIds.has(bullet.id)) continue
+            
+            if (checkCollision(bullet.position, bullet.size, enemy.position, enemy.size)) {
+              enemyHp -= bullet.damage
+              playerBulletIds.add(bullet.id)
+              hasHit = true
+              if (enemyHp <= 0) break
+            }
+          }
+          
+          if (enemyHp <= 0) {
+            scoreDelta += enemy.score
+            newExplosions.push({
+              id: generateId(),
+              position: enemy.position,
+              size: enemy.size,
+              duration: 300,
+              maxDuration: 300,
+            })
+            hasExplosion = true
+            return null // 标记为已销毁
+          }
+          
+          return { ...enemy, hp: enemyHp }
+        }).filter(Boolean) as Enemy[]
+        
+        // 移除已使用的子弹
+        currentBullets = currentBullets.filter(b => !playerBulletIds.has(b.id))
+
+        if (scoreDelta > 0) {
+          // 累积分数用于触发Boss战
+          accumulatedScoreRef.current += scoreDelta
+          
+          // 更新显示分数
+          setScore((s) => s + scoreDelta)
+          
+          // 更新自上次Boss以来的分数显示
+          setScoreSinceLastBoss((prev) => {
+            const newValue = prev + scoreDelta
+            // 检查是否达到Boss触发条件
+            if (accumulatedScoreRef.current >= BOSS_SPAWN_THRESHOLD) {
+              triggerBossBattle()
+            }
+            return newValue
           })
-          hasExplosion = true
-        } else {
-          remainingEnemies.push({ ...enemy, hp: enemyHp })
         }
-      })
-      
-      if (hasHit) {
-        onHit?.()
-      }
-      if (hasExplosion) {
-        onExplosion?.()
-      }
-
-      // 收集未使用的子弹
-      currentBullets.forEach((bullet) => {
-        if (!bulletUsed.has(bullet.id)) {
-          remainingBullets.push(bullet)
+        if (newExplosions.length > 0) {
+          currentExplosions = [...currentExplosions, ...newExplosions]
         }
-      })
+        if (hasHit) onHit?.()
+        if (hasExplosion) onExplosion?.()
 
-      currentBullets = remainingBullets
-      currentEnemies = remainingEnemies
-
-      if (scoreDelta > 0) {
-        setScore((s) => s + scoreDelta)
-      }
-      if (newExplosions.length > 0) {
-        currentExplosions = [...currentExplosions, ...newExplosions]
-      }
-
-      // 碰撞检测 - 玩家碰到敌机
+      // 碰撞检测 - 玩家碰到敌机或Boss
       let playerHit = false
       const enemiesAfterCollision: Enemy[] = []
 
@@ -406,15 +964,49 @@ export function useGame(options: UseGameOptions = {}) {
 
       currentEnemies = enemiesAfterCollision
 
-      if (playerHit) {
+      // 玩家碰到Boss
+      if (isBossBattle && currentBoss && checkCollision(currentPlayer.position, currentPlayer.size, currentBoss.position, currentBoss.size)) {
+        playerHit = true
+      }
+
+      // 处理玩家受伤（统一函数）
+      const handlePlayerDamage = () => {
         onDamage?.()
         setPlayer((prev) => {
-          const newHp = prev.hp - 1
-          if (newHp <= 0) {
-            gameOver()
+          const currentShield = prev.shield || 0
+          if (currentShield > 0) {
+            // 有护盾时先扣护盾
+            return { ...prev, shield: currentShield - 1 }
+          } else {
+            // 无护盾时扣血
+            const newHp = prev.hp - 1
+            if (newHp <= 0) {
+              gameOver()
+            }
+            return { ...prev, hp: newHp }
           }
-          return { ...prev, hp: newHp }
         })
+      }
+
+      if (playerHit) {
+        handlePlayerDamage()
+      }
+
+      // 碰撞检测 - 敌机/Boss子弹击中玩家
+      const playerHitByBullet = currentBullets.some((bullet) => 
+        !bullet.isPlayerBullet && checkCollision(bullet.position, bullet.size, currentPlayer.position, currentPlayer.size)
+      )
+      
+      if (playerHitByBullet) {
+        // 移除击中玩家的子弹
+        currentBullets = currentBullets.filter((bullet) => {
+          if (!bullet.isPlayerBullet) {
+            return !checkCollision(bullet.position, bullet.size, currentPlayer.position, currentPlayer.size)
+          }
+          return true
+        })
+        
+        handlePlayerDamage()
       }
 
       // 碰撞检测 - 玩家拾取道具
@@ -427,11 +1019,15 @@ export function useGame(options: UseGameOptions = {}) {
           setPlayer((prev) => {
             switch (powerUp.type) {
               case 'heal':
-                return { ...prev, hp: Math.min(prev.hp + 1, prev.maxHp) }
+                // 治疗：恢复2点HP或50%最大HP（取较高值）
+                const healAmount = Math.max(2, Math.floor(prev.maxHp * 0.5))
+                return { ...prev, hp: Math.min(prev.hp + healAmount, prev.maxHp) }
               case 'power':
-                return { ...prev }
+                // 火力增强：提升子弹伤害（最高3级）
+                return { ...prev, powerLevel: Math.min((prev.powerLevel || 0) + 1, PLAYER_MAX_POWER) }
               case 'shield':
-                return { ...prev }
+                // 护盾：增加2点护盾值（上限3点）
+                return { ...prev, shield: Math.min((prev.shield || 0) + 2, 3) }
               default:
                 return prev
             }
@@ -468,13 +1064,19 @@ export function useGame(options: UseGameOptions = {}) {
         cancelAnimationFrame(gameLoopRef.current)
       }
     }
-  }, [status, keys, score, gameOver])
+  }, [status, keys, score, defeatBoss, gameOver, onShoot, onHit, onExplosion, onPowerUp, onDamage, triggerBossBattle])
 
   return {
     // 游戏状态
     status,
     score,
     gameTime,
+    
+    // Boss相关
+    boss,
+    bossDefeatedCount,
+    pendingBossType,
+    scoreSinceLastBoss,
     
     // 游戏对象
     player,
@@ -490,6 +1092,7 @@ export function useGame(options: UseGameOptions = {}) {
     // 操作方法
     startGame,
     togglePause,
+    startBossBattle,
     
     // 按键状态（用于显示）
     keys,

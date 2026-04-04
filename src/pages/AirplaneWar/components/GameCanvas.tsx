@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
-import type { Player, Bullet, Enemy, PowerUp, Explosion } from '../types'
-import { PlayerPlane, EnemyPlane, BulletSvg, PowerUpItem, ExplosionEffect, StarBackground } from './'
+import type { Player, Bullet, Enemy, Boss, PowerUp, Explosion } from '../types'
+import { PlayerPlane, EnemyPlane, BulletSvg, PowerUpItem, ExplosionEffect, StarBackground, BossPlane } from './'
 
 interface GameCanvasProps {
   width: number
@@ -8,6 +8,7 @@ interface GameCanvasProps {
   player: Player
   bullets: Bullet[]
   enemies: Enemy[]
+  boss: Boss | null
   powerUps: PowerUp[]
   explosions: Explosion[]
   isPlaying: boolean
@@ -19,11 +20,12 @@ export function GameCanvas({
   player,
   bullets,
   enemies,
+  boss,
   powerUps,
   explosions,
   isPlaying,
 }: GameCanvasProps) {
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
   const [starOffset, setStarOffset] = useState(0)
   const [engineFrame, setEngineFrame] = useState(0)
 
@@ -93,7 +95,7 @@ export function GameCanvas({
         />
       ))}
 
-      {/* 敌机 */}
+      {/* 普通敌机 */}
       {enemies.map((enemy) => (
         <EnemyPlane
           key={enemy.id}
@@ -106,6 +108,9 @@ export function GameCanvas({
           maxHp={enemy.maxHp}
         />
       ))}
+
+      {/* Boss */}
+      {boss && <BossPlane boss={boss} />}
 
       {/* 玩家飞机 */}
       {player.hp > 0 && (

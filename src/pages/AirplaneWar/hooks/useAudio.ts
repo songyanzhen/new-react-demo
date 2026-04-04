@@ -56,6 +56,18 @@ export function useAudio() {
     soundEffects.playGameOver()
   }, [])
 
+  const playBossVictory = useCallback(() => {
+    soundEffects.playBossVictory()
+  }, [])
+
+  const playBossWarning = useCallback(() => {
+    soundEffects.playBossWarning()
+  }, [])
+
+  const playPlaneExplosion = useCallback(() => {
+    soundEffects.playPlaneExplosion()
+  }, [])
+
   return {
     enabled,
     volume,
@@ -68,5 +80,8 @@ export function useAudio() {
     playDamage,
     playGameStart,
     playGameOver,
+    playBossVictory,
+    playBossWarning,
+    playPlaneExplosion,
   }
 }
