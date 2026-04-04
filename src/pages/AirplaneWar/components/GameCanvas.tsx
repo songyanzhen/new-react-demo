@@ -138,8 +138,9 @@ export function GameCanvas({
         />
       )}
       
-      {/* 扫描线效果 */}
+      {/* 扫描线效果 - 使用 pattern */}
       <ScanLines width={width} height={height} />
+      <rect x={0} y={0} width={width} height={height} fill="url(#scanlines)" pointerEvents="none" />
       
       {/* 暗角 */}
       <Vignette width={width} height={height} />

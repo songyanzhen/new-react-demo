@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 interface EngineTrailProps {
   x: number
   y: number
@@ -8,12 +10,15 @@ interface EngineTrailProps {
 
 // 引擎尾迹粒子
 export function EngineTrail({ x, y, width, color, intensity = 1 }: EngineTrailProps) {
-  const particles = Array.from({ length: Math.floor(5 * intensity) }, (_, i) => ({
-    id: i,
-    offsetX: (Math.random() - 0.5) * width * 0.5,
-    size: 2 + Math.random() * 4,
-    delay: i * 0.1,
-  }))
+  // 使用 useMemo 缓存粒子数组，避免每次渲染都重新创建
+  const particles = useMemo(() => {
+    return Array.from({ length: Math.floor(5 * intensity) }, (_, i) => ({
+      id: i,
+      offsetX: (Math.random() - 0.5) * width * 0.5,
+      size: 2 + Math.random() * 4,
+      delay: i * 0.1,
+    }))
+  }, [width, intensity])
 
   return (
     <g>
@@ -237,22 +242,14 @@ interface ScanLineProps {
   height: number
 }
 
-// 扫描线效果（全局）
+// 扫描线效果（全局）- 使用 pattern 优化性能
 export function ScanLines({ width, height }: ScanLineProps) {
   return (
-    <g opacity={0.03} pointerEvents="none">
-      {Array.from({ length: Math.floor(height / 4) }).map((_, i) => (
-        <line
-          key={i}
-          x1={0}
-          y1={i * 4}
-          x2={width}
-          y2={i * 4}
-          stroke="#000"
-          strokeWidth={1}
-        />
-      ))}
-    </g>
+    <defs>
+      <pattern id="scanlines" x="0" y="0" width="1" height="4" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="3" x2="1" y2="3" stroke="#000" strokeWidth="1" opacity="0.03" />
+      </pattern>
+    </defs>
   )
 }
 

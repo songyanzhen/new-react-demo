@@ -806,8 +806,8 @@ export function useGame(options: UseGameOptions = {}) {
       currentBullets = currentBullets
         .map((bullet) => {
           // 如果有速度向量则使用，否则按原逻辑直行
-          const vx = (bullet as any).velocityX || 0
-          const vy = (bullet as any).velocityY || (bullet.isPlayerBullet ? -bullet.speed : bullet.speed)
+          const vx = bullet.velocityX ?? 0
+          const vy = bullet.velocityY ?? (bullet.isPlayerBullet ? -bullet.speed : bullet.speed)
           return {
             ...bullet,
             position: { 
@@ -877,71 +877,71 @@ export function useGame(options: UseGameOptions = {}) {
       }
 
       // 碰撞检测 - 子弹击中敌机（包括Boss战时的小怪）
-        let hasHit = false
-        let hasExplosion = false
-        let scoreDelta = 0
-        const newExplosions: Explosion[] = []
+      let hasHit = false
+      let hasExplosion = false
+      let scoreDelta = 0
+      const newExplosions: Explosion[] = []
+      
+      // 预过滤玩家子弹，减少遍历
+      const playerBullets = currentBullets.filter(b => b.isPlayerBullet)
+      const playerBulletIds = new Set<string>()
+      
+      // 检查每个敌机与玩家子弹的碰撞
+      currentEnemies = currentEnemies.map((enemy) => {
+        let enemyHp = enemy.hp
         
-        // 预过滤玩家子弹，减少遍历
-        const playerBullets = currentBullets.filter(b => b.isPlayerBullet)
-        const playerBulletIds = new Set<string>()
-        
-        // 检查每个敌机与玩家子弹的碰撞
-        currentEnemies = currentEnemies.map((enemy) => {
-          let enemyHp = enemy.hp
+        for (const bullet of playerBullets) {
+          if (playerBulletIds.has(bullet.id)) continue
           
-          for (const bullet of playerBullets) {
-            if (playerBulletIds.has(bullet.id)) continue
-            
-            if (checkCollision(bullet.position, bullet.size, enemy.position, enemy.size)) {
-              enemyHp -= bullet.damage
-              playerBulletIds.add(bullet.id)
-              hasHit = true
-              if (enemyHp <= 0) break
-            }
+          if (checkCollision(bullet.position, bullet.size, enemy.position, enemy.size)) {
+            enemyHp -= bullet.damage
+            playerBulletIds.add(bullet.id)
+            hasHit = true
+            if (enemyHp <= 0) break
           }
-          
-          if (enemyHp <= 0) {
-            scoreDelta += enemy.score
-            newExplosions.push({
-              id: generateId(),
-              position: enemy.position,
-              size: enemy.size,
-              duration: 300,
-              maxDuration: 300,
-            })
-            hasExplosion = true
-            return null // 标记为已销毁
-          }
-          
-          return { ...enemy, hp: enemyHp }
-        }).filter(Boolean) as Enemy[]
+        }
         
-        // 移除已使用的子弹
-        currentBullets = currentBullets.filter(b => !playerBulletIds.has(b.id))
-
-        if (scoreDelta > 0) {
-          // 累积分数用于触发Boss战
-          accumulatedScoreRef.current += scoreDelta
-          
-          // 更新显示分数
-          setScore((s) => s + scoreDelta)
-          
-          // 更新自上次Boss以来的分数显示
-          setScoreSinceLastBoss((prev) => {
-            const newValue = prev + scoreDelta
-            // 检查是否达到Boss触发条件
-            if (accumulatedScoreRef.current >= BOSS_SPAWN_THRESHOLD) {
-              triggerBossBattle()
-            }
-            return newValue
+        if (enemyHp <= 0) {
+          scoreDelta += enemy.score
+          newExplosions.push({
+            id: generateId(),
+            position: enemy.position,
+            size: enemy.size,
+            duration: 300,
+            maxDuration: 300,
           })
+          hasExplosion = true
+          return null // 标记为已销毁
         }
-        if (newExplosions.length > 0) {
-          currentExplosions = [...currentExplosions, ...newExplosions]
-        }
-        if (hasHit) onHit?.()
-        if (hasExplosion) onExplosion?.()
+        
+        return { ...enemy, hp: enemyHp }
+      }).filter(Boolean) as Enemy[]
+      
+      // 移除已使用的子弹
+      currentBullets = currentBullets.filter(b => !playerBulletIds.has(b.id))
+
+      if (scoreDelta > 0) {
+        // 累积分数用于触发Boss战
+        accumulatedScoreRef.current += scoreDelta
+        
+        // 更新显示分数
+        setScore((s) => s + scoreDelta)
+        
+        // 更新自上次Boss以来的分数显示
+        setScoreSinceLastBoss((prev) => {
+          const newValue = prev + scoreDelta
+          // 检查是否达到Boss触发条件
+          if (accumulatedScoreRef.current >= BOSS_SPAWN_THRESHOLD) {
+            triggerBossBattle()
+          }
+          return newValue
+        })
+      }
+      if (newExplosions.length > 0) {
+        currentExplosions = [...currentExplosions, ...newExplosions]
+      }
+      if (hasHit) onHit?.()
+      if (hasExplosion) onExplosion?.()
 
       // 碰撞检测 - 玩家碰到敌机或Boss
       let playerHit = false

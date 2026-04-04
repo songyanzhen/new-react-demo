@@ -32,6 +32,9 @@ export interface Bullet {
   speed: number
   damage: number
   isPlayerBullet: boolean
+  // 可选：斜向子弹的速度向量
+  velocityX?: number
+  velocityY?: number
 }
 
 // 敌机
