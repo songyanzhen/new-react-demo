@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import type { Player, Bullet, Enemy, Boss, PowerUp, Explosion } from '../types'
 import { PlayerPlane, EnemyPlane, BulletSvg, PowerUpItem, ExplosionEffect, StarBackground, BossPlane } from './'
+import { ScanLines, Vignette, EngineTrail } from './Effects'
 
 interface GameCanvasProps {
   width: number
@@ -106,6 +107,19 @@ export function GameCanvas({
           type={enemy.type}
           hp={enemy.hp}
           maxHp={enemy.maxHp}
+          frame={engineFrame}
+        />
+      ))}
+      
+      {/* 敌机引擎尾迹 */}
+      {enemies.map((enemy) => (
+        <EngineTrail
+          key={`trail-${enemy.id}`}
+          x={enemy.position.x + enemy.size.width / 2}
+          y={enemy.position.y}
+          width={enemy.size.width}
+          color={enemy.type === 'fast' ? '#fbbf24' : enemy.type === 'tank' ? '#a78bfa' : '#94a3b8'}
+          intensity={enemy.type === 'fast' ? 1.5 : 1}
         />
       ))}
 
@@ -120,8 +134,16 @@ export function GameCanvas({
           width={player.size.width}
           height={player.size.height}
           engineFrame={engineFrame}
+          shield={player.shield || 0}
         />
       )}
+      
+      {/* 扫描线效果 */}
+      <ScanLines width={width} height={height} />
+      
+      {/* 暗角 */}
+      <Vignette width={width} height={height} />
+      <rect x={0} y={0} width={width} height={height} fill="url(#vignetteGrad)" pointerEvents="none" />
     </svg>
   )
 }
