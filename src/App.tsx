@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import { PuzzleTest } from './pages/PuzzleTest/index'
 import { AirplaneWar } from './pages/AirplaneWar/index'
+import { RpgGame } from './pages/RpgGame/index'
 
 function App() {
   return (
@@ -40,6 +41,12 @@ function App() {
               >
                 飞机大战
               </Link>
+              <Link
+                to="/rpg"
+                className="rounded-xl border border-dark-600 bg-dark-800 px-3 py-1.5 text-sm font-medium text-slate-100 shadow-sm transition hover:-translate-y-0.5 hover:bg-dark-700 hover:shadow"
+              >
+                RPG
+              </Link>
             </div>
           </div>
         </nav>
@@ -48,6 +55,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/puzzleTest" element={<PuzzleTest />} />
           <Route path="/airplane" element={<AirplaneWar />} />
+          <Route path="/rpg" element={<RpgGame />} />
         </Routes>
       </div>
     </div>
@@ -146,6 +154,44 @@ function Home() {
               <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-dark-600 bg-dark-900 shadow-sm sm:flex">
                 <svg className="h-5 w-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              </div>
+              <div className="mt-0.5 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-slate-300">
+                →
+              </div>
+            </div>
+          </div>
+        </Link>
+        
+        <Link
+          className="group relative overflow-hidden rounded-2xl border border-dark-600 bg-dark-800/40 p-5 text-left shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-md"
+          to="/rpg"
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-indigo-500/10 blur-2xl"
+          />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold tracking-tight text-slate-100">
+                RPG地牢
+              </div>
+              <div className="mt-1 text-sm text-slate-400">
+                创建角色，探索地牢，回合制战斗！
+              </div>
+              <div className="mt-4 inline-flex items-center gap-2 text-xs text-slate-500">
+                <span className="rounded-full bg-white/10 px-2 py-1">
+                  /rpg
+                </span>
+                <span className="rounded-full bg-white/10 px-2 py-1">
+                  RPG
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-dark-600 bg-dark-900 shadow-sm sm:flex">
+                <svg className="h-5 w-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2L2 7l8 5 8-5-8-5zM2 17l8 5 8-5M2 12l8 5 8-5" />
                 </svg>
               </div>
               <div className="mt-0.5 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-slate-300">
