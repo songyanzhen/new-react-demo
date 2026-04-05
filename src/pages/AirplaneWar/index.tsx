@@ -84,8 +84,8 @@ function AirplaneWar() {
     }
   }, [status, playPlaneExplosion])
 
-  // 计算距离下一个Boss的进度
-  const bossProgress = Math.min(100, (scoreSinceLastBoss / 200) * 100)
+  // 计算距离下一个Boss的进度（每300分触发）
+  const bossProgress = Math.min(100, (scoreSinceLastBoss / 300) * 100)
   
   // 获取当前难度信息
   const difficultyDesc = getDifficultyDescription(score)
@@ -113,7 +113,7 @@ function AirplaneWar() {
                 </span>
                 <span className="text-xs text-slate-500">难度随分数提升</span>
               </div>
-              <span className="text-xs text-slate-400">{scoreSinceLastBoss}/200 分</span>
+              <span className="text-xs text-slate-400">{scoreSinceLastBoss}/300 分</span>
             </div>
             <div className="h-2 rounded-full bg-dark-700 overflow-hidden">
               <div 

@@ -15,11 +15,11 @@ export function calculateDifficulty(score: number): DifficultyConfig {
   const difficultyLevel = Math.floor(score / 500)
   
   // 计算各项数值（有上限）
-  const speedMult = Math.min(1 + difficultyLevel * 0.15, 2.5) // 最高2.5倍速
-  const hpMult = Math.min(1 + difficultyLevel * 0.1, 2) // 最高2倍血
-  const spawnRate = Math.max(1500 - difficultyLevel * 100, 600) // 最快600毫秒
+  const speedMult = Math.min(1 + difficultyLevel * 0.2, 3.0) // 最高3倍速
+  const hpMult = Math.min(1 + difficultyLevel * 0.15, 2.5) // 最高2.5倍血
+  const spawnRate = Math.max(1500 - difficultyLevel * 120, 400) // 最快400毫秒
   const scoreMult = Math.min(1 + difficultyLevel * 0.1, 2) // 最高2倍分
-  const powerRate = Math.max(10000 - difficultyLevel * 500, 5000) // 最快5秒
+  const powerRate = Math.max(12000 - difficultyLevel * 400, 6000) // 最快6秒
   
   return {
     enemySpeedMultiplier: speedMult,

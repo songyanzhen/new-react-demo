@@ -2,14 +2,14 @@ import type { BossType, BossConfig } from '../types'
 
 // Boss 血量成长系数
 export function getBossHpMultiplier(defeatedCount: number): number {
-  // 每击败1个Boss，后续Boss血量增加20%，最高翻倍
-  return Math.min(1 + defeatedCount * 0.2, 2.0)
+  // 每击败1个Boss，后续Boss血量增加30%，最高+150%
+  return Math.min(1 + defeatedCount * 0.3, 2.5)
 }
 
 // Boss 攻击间隔随难度调整
 export function getBossAttackInterval(defeatedCount: number): number {
-  // 每击败1个Boss，攻击间隔减少5%，最低700ms
-  return Math.max(700, 900 - defeatedCount * 45)
+  // 每击败1个Boss，攻击间隔减少8%，最低600ms
+  return Math.max(600, 1000 - defeatedCount * 80)
 }
 
 export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
@@ -17,7 +17,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
     name: '毁灭者',
     description: '重装型要塞，火力覆盖全场',
     size: { width: 90, height: 90 },
-    hp: 80,
+    hp: 150,
     speed: 1.2,
     scoreReward: 600,
     colors: {
@@ -30,7 +30,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
     name: '幽灵战机',
     description: '高速隐形单位，难以捉摸',
     size: { width: 70, height: 70 },
-    hp: 55,
+    hp: 100,
     speed: 2.5,
     scoreReward: 700,
     colors: {
@@ -43,7 +43,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
     name: '虚空母舰',
     description: '巨型航母，源源不断的援军',
     size: { width: 110, height: 110 },
-    hp: 130,
+    hp: 250,
     speed: 0.6,
     scoreReward: 1000,
     colors: {
@@ -57,7 +57,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
     name: '虫群主宰',
     description: '生物机械混合体，吞噬一切',
     size: { width: 100, height: 100 },
-    hp: 100,
+    hp: 180,
     speed: 1.0,
     scoreReward: 800,
     colors: {
@@ -70,7 +70,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
     name: '新星核心',
     description: '能量生命体，释放毁灭射线',
     size: { width: 80, height: 80 },
-    hp: 70,
+    hp: 120,
     speed: 1.8,
     scoreReward: 750,
     colors: {
@@ -83,7 +83,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
     name: '远古泰坦',
     description: '传说级存在，拥有再生能力',
     size: { width: 120, height: 120 },
-    hp: 180,
+    hp: 300,
     speed: 0.5,
     scoreReward: 1200,
     colors: {
@@ -95,7 +95,7 @@ export const BOSS_CONFIGS: Record<BossType, BossConfig> = {
 }
 
 // Boss出现间隔（普通得分）
-export const BOSS_SPAWN_THRESHOLD = 200
+export const BOSS_SPAWN_THRESHOLD = 300
 
 // 所有Boss类型
 const ALL_BOSS_TYPES: BossType[] = ['destroyer', 'phantom', 'mothership', 'overlord', 'nova', 'titan']

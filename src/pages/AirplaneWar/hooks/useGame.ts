@@ -26,10 +26,10 @@ const ENEMY_SPEED_BASE = 2
 const POWERUP_SIZE = { width: 25, height: 25 }
 
 // 玩家配置
-const PLAYER_INITIAL_HP = 5
-const PLAYER_MAX_HP = 5
+const PLAYER_INITIAL_HP = 3
+const PLAYER_MAX_HP = 3
 const PLAYER_MAX_POWER = 3
-const PLAYER_BULLET_COOLDOWN = 120 // 毫秒，射速
+const PLAYER_BULLET_COOLDOWN = 180 // 毫秒，射速（更慢）
 
 interface UseGameOptions {
   onShoot?: () => void
@@ -237,10 +237,10 @@ export function useGame(options: UseGameOptions = {}) {
     // 给予奖励
     setScore((s) => s + currentBoss.scoreReward)
     
-    // 恢复玩家部分HP（+2，不超过最大值的80%）
+    // 恢复玩家部分HP（+1，不超过最大值的60%）
     setPlayer((prev) => ({ 
       ...prev, 
-      hp: Math.min(prev.hp + 2, Math.floor(prev.maxHp * 0.8))
+      hp: Math.min(prev.hp + 1, Math.floor(prev.maxHp * 0.6))
     }))
     
     // 清理场上的所有子弹和敌机（防止击败Boss后立刻受伤）
@@ -372,8 +372,8 @@ export function useGame(options: UseGameOptions = {}) {
       if (keys.Space && bulletCooldownRef.current > PLAYER_BULLET_COOLDOWN) {
         bulletCooldownRef.current = 0
         const powerLevel = currentPlayer.powerLevel || 0
-        // 火力等级伤害：0级=1，1级=2，2级=3，3级=5
-        const damage = powerLevel >= 3 ? 5 : (1 + powerLevel)
+        // 火力等级伤害：0级=1，1级=2，2级=3，3级=4
+        const damage = powerLevel >= 3 ? 4 : (1 + powerLevel)
         const newBullets: Bullet[] = []
         
         // 根据火力等级发射不同数量/类型的子弹
@@ -439,10 +439,9 @@ export function useGame(options: UseGameOptions = {}) {
             }
           )
         } else {
-          // 满级火力 - 5发扇形 + 伤害提升到5
+          // 满级火力 - 3发（中间+两侧），伤害提升到4
           const centerX = currentPlayer.position.x + currentPlayer.size.width / 2
           const baseY = currentPlayer.position.y
-          // 中间3发直行
           newBullets.push(
             {
               id: generateId(),
@@ -454,7 +453,7 @@ export function useGame(options: UseGameOptions = {}) {
             },
             {
               id: generateId(),
-              position: { x: centerX - 15, y: baseY + 5 },
+              position: { x: currentPlayer.position.x + 5, y: baseY + 5 },
               size: BULLET_SIZE,
               speed: BULLET_SPEED,
               damage,
@@ -462,28 +461,9 @@ export function useGame(options: UseGameOptions = {}) {
             },
             {
               id: generateId(),
-              position: { x: centerX + 10, y: baseY + 5 },
+              position: { x: currentPlayer.position.x + currentPlayer.size.width - 10, y: baseY + 5 },
               size: BULLET_SIZE,
               speed: BULLET_SPEED,
-              damage,
-              isPlayerBullet: true,
-            }
-          )
-          // 两侧2发偏斜（通过位置偏移实现）
-          newBullets.push(
-            {
-              id: generateId(),
-              position: { x: currentPlayer.position.x, y: baseY + 10 },
-              size: BULLET_SIZE,
-              speed: BULLET_SPEED - 0.5,
-              damage,
-              isPlayerBullet: true,
-            },
-            {
-              id: generateId(),
-              position: { x: currentPlayer.position.x + currentPlayer.size.width - 5, y: baseY + 10 },
-              size: BULLET_SIZE,
-              speed: BULLET_SPEED - 0.5,
               damage,
               isPlayerBullet: true,
             }
@@ -747,17 +727,17 @@ export function useGame(options: UseGameOptions = {}) {
           if (enemyType === 9) {
             type = 'fast'
             hp = 1
-            speed *= 2
-            scoreValue = Math.floor(20 * difficulty.enemyScoreMultiplier)
+            speed *= 2.5
+            scoreValue = Math.floor(25 * difficulty.enemyScoreMultiplier)
           } else if (enemyType === 10) {
             type = 'tank'
-            hp = Math.floor(3 * difficulty.enemyHpMultiplier)
+            hp = Math.floor(5 * difficulty.enemyHpMultiplier)
             speed *= 0.5
-            scoreValue = Math.floor(50 * difficulty.enemyScoreMultiplier)
+            scoreValue = Math.floor(60 * difficulty.enemyScoreMultiplier)
           } else {
-            // 普通敌机也可能根据难度增加血量
-            if (difficulty.enemyHpMultiplier > 1.5) {
-              hp = Math.floor(1 * (difficulty.enemyHpMultiplier * 0.7))
+            // 普通敌机根据难度增加血量
+            if (difficulty.enemyHpMultiplier > 1.3) {
+              hp = Math.floor(1 * (difficulty.enemyHpMultiplier * 0.8))
             }
           }
 
@@ -1019,15 +999,15 @@ export function useGame(options: UseGameOptions = {}) {
           setPlayer((prev) => {
             switch (powerUp.type) {
               case 'heal':
-                // 治疗：恢复2点HP或50%最大HP（取较高值）
-                const healAmount = Math.max(2, Math.floor(prev.maxHp * 0.5))
+                // 治疗：恢复1点HP或30%最大HP（取较高值）
+                const healAmount = Math.max(1, Math.floor(prev.maxHp * 0.3))
                 return { ...prev, hp: Math.min(prev.hp + healAmount, prev.maxHp) }
               case 'power':
                 // 火力增强：提升子弹伤害（最高3级）
                 return { ...prev, powerLevel: Math.min((prev.powerLevel || 0) + 1, PLAYER_MAX_POWER) }
               case 'shield':
-                // 护盾：增加2点护盾值（上限3点）
-                return { ...prev, shield: Math.min((prev.shield || 0) + 2, 3) }
+                // 护盾：增加1点护盾值（上限2点）
+                return { ...prev, shield: Math.min((prev.shield || 0) + 1, 2) }
               default:
                 return prev
             }
