@@ -1,10 +1,11 @@
+import { useState } from 'react'
 import type { Character, Inventory } from '../types'
 
 interface ExploreSceneProps {
   player: Character
   inventory: Inventory
   currentFloor: number
-  gameLog: string[]
+  gameLog: { id: string; text: string; type: string; timestamp: number }[]
   onEncounter: () => void
   onNextFloor: () => void
   onUseItem: (index: number) => void
@@ -19,6 +20,32 @@ export function ExploreScene({
   onNextFloor,
   onUseItem,
 }: ExploreSceneProps) {
+  const [showStats, setShowStats] = useState(false)
+
+  // 获取职业图标
+  const getClassIcon = (className: string) => {
+    const icons: Record<string, string> = {
+      warrior: '⚔️',
+      mage: '🔮',
+      rogue: '🗡️',
+      paladin: '🛡️',
+      ranger: '🏹',
+    }
+    return icons[className] || '❓'
+  }
+
+  // 获取职业名称
+  const getClassName = (className: string) => {
+    const names: Record<string, string> = {
+      warrior: '战士',
+      mage: '法师',
+      rogue: '盗贼',
+      paladin: '圣骑士',
+      ranger: '游侠',
+    }
+    return names[className] || className
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* 左侧：角色状态 */}
@@ -27,7 +54,7 @@ export function ExploreScene({
         <div className="rounded-2xl border border-dark-600 bg-dark-800/50 p-5 shadow-lg backdrop-blur">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-3xl shadow-lg">
-              {getClassEmoji(player.class)}
+              {getClassIcon(player.class)}
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-100">{player.name}</h3>
@@ -77,25 +104,66 @@ export function ExploreScene({
             </div>
           </div>
 
-          {/* 属性 */}
+          {/* 基础属性 */}
           <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
             <div className="rounded-lg bg-dark-900/50 p-2">
               <span className="text-slate-400">力量</span>
-              <span className="ml-2 font-semibold text-slate-100">{player.stats.strength}</span>
+              <span className="ml-2 font-semibold text-slate-100">{player.baseStats.strength}</span>
             </div>
             <div className="rounded-lg bg-dark-900/50 p-2">
               <span className="text-slate-400">智力</span>
-              <span className="ml-2 font-semibold text-slate-100">{player.stats.intelligence}</span>
+              <span className="ml-2 font-semibold text-slate-100">{player.baseStats.intelligence}</span>
             </div>
             <div className="rounded-lg bg-dark-900/50 p-2">
               <span className="text-slate-400">敏捷</span>
-              <span className="ml-2 font-semibold text-slate-100">{player.stats.agility}</span>
+              <span className="ml-2 font-semibold text-slate-100">{player.baseStats.agility}</span>
             </div>
             <div className="rounded-lg bg-dark-900/50 p-2">
-              <span className="text-slate-400">防御</span>
-              <span className="ml-2 font-semibold text-slate-100">{player.stats.defense}</span>
+              <span className="text-slate-400">体质</span>
+              <span className="ml-2 font-semibold text-slate-100">{player.baseStats.vitality}</span>
             </div>
           </div>
+
+          {/* 展开详细属性 */}
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className="mt-3 w-full rounded-lg bg-dark-700/50 py-1.5 text-xs text-slate-400 transition hover:bg-dark-600/50"
+          >
+            {showStats ? '隐藏详细属性 ▲' : '显示详细属性 ▼'}
+          </button>
+
+          {showStats && (
+            <div className="mt-3 space-y-1 text-xs">
+              <div className="flex justify-between text-slate-400">
+                <span>攻击力</span>
+                <span className="text-slate-200">{player.currentStats.attack}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>魔法攻击</span>
+                <span className="text-slate-200">{player.currentStats.magicAttack}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>防御力</span>
+                <span className="text-slate-200">{player.currentStats.defense}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>暴击率</span>
+                <span className="text-slate-200">{player.currentStats.critRate}%</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>闪避率</span>
+                <span className="text-slate-200">{player.currentStats.evasion}%</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>命中率</span>
+                <span className="text-slate-200">{player.currentStats.hitRate}%</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>速度</span>
+                <span className="text-slate-200">{player.currentStats.speed}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 背包 */}
@@ -114,7 +182,7 @@ export function ExploreScene({
                   onClick={() => onUseItem(index)}
                   className="flex w-full items-center justify-between rounded-lg bg-dark-900/50 p-2 text-left text-sm transition hover:bg-dark-700/50"
                 >
-                  <span className="text-slate-200">{entry.item.name}</span>
+                  <span className="text-slate-200">{entry.item.icon || '📦'} {entry.item.name}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400">x{entry.quantity}</span>
                     {entry.item.type === 'consumable' && (
@@ -135,6 +203,11 @@ export function ExploreScene({
           <div className="mb-2 text-6xl">🏰</div>
           <h2 className="text-2xl font-bold text-slate-100">第 {currentFloor} 层</h2>
           <p className="text-slate-400">危险的地牢深处...</p>
+          {currentFloor % 5 === 0 && (
+            <div className="mt-2 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-400">
+              ⚠️ BOSS 区域
+            </div>
+          )}
         </div>
 
         {/* 行动按钮 */}
@@ -162,9 +235,10 @@ export function ExploreScene({
         <div className="rounded-2xl border border-dark-600 bg-dark-800/50 p-5 shadow-lg backdrop-blur">
           <h4 className="mb-3 font-semibold text-slate-100">📜 冒险日志</h4>
           <div className="h-48 overflow-y-auto space-y-2">
-            {gameLog.map((log, index) => (
-              <div key={index} className="text-sm text-slate-300">
-                <span className="text-slate-500">[{index + 1}]</span> {log}
+            {gameLog.map((log) => (
+              <div key={log.id} className={`text-sm ${getLogColor(log.type)}`}>
+                <span className="text-slate-600">[{new Date(log.timestamp).toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>{' '}
+                {log.text}
               </div>
             ))}
           </div>
@@ -174,20 +248,15 @@ export function ExploreScene({
   )
 }
 
-function getClassEmoji(characterClass: string): string {
-  const emojis: Record<string, string> = {
-    warrior: '⚔️',
-    mage: '🔮',
-    rogue: '🗡️',
+function getLogColor(type: string): string {
+  const colors: Record<string, string> = {
+    normal: 'text-slate-300',
+    damage: 'text-red-400',
+    heal: 'text-green-400',
+    crit: 'text-yellow-400',
+    buff: 'text-blue-400',
+    debuff: 'text-purple-400',
+    system: 'text-slate-400 italic',
   }
-  return emojis[characterClass] || '❓'
-}
-
-function getClassName(characterClass: string): string {
-  const names: Record<string, string> = {
-    warrior: '战士',
-    mage: '法师',
-    rogue: '盗贼',
-  }
-  return names[characterClass] || '未知'
+  return colors[type] || 'text-slate-300'
 }

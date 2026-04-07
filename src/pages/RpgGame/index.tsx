@@ -1,7 +1,10 @@
+import { useEffect, useCallback } from 'react'
 import { useRpgGame } from './hooks/useRpgGame'
 import { CharacterCreate } from './components/CharacterCreate'
 import { BattleScene } from './components/BattleScene'
 import { ExploreScene } from './components/ExploreScene'
+import { CheatPanel } from './components/CheatPanel'
+import type { CheatMode } from './types'
 
 export { RpgGame }
 
@@ -13,24 +16,68 @@ function RpgGame() {
     inventory,
     gameLog,
     currentFloor,
+    cheatMode,
+    battleAnimation,
     startGame,
     encounterEnemy,
     playerAction,
     selectEnemy,
     nextFloor,
     useItem,
+    handleTitleClick,
+    toggleCheatOption,
   } = useRpgGame()
+
+  // 键盘监听（作弊模式快捷键）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (cheatMode.enabled) {
+        switch (e.key.toLowerCase()) {
+          case 'g':
+            toggleCheatOption('godMode')
+            break
+          case 'k':
+            toggleCheatOption('oneHitKill')
+            break
+          case 'm':
+            toggleCheatOption('infiniteMP')
+            break
+          case 'd':
+            toggleCheatOption('maxDropRate')
+            break
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [cheatMode.enabled, toggleCheatOption])
 
   return (
     <main className="px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto max-w-5xl">
-        {/* 标题 */}
+        {/* 标题 - 点击5次激活作弊模式 */}
         <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">
-            🗡️ RPG 地牢探险
+          <h1 
+            className="text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl cursor-pointer select-none"
+            onClick={handleTitleClick}
+            title="点击5次激活彩蛋"
+          >
+            {cheatMode.enabled ? '🎮 RPG 地牢探险 [作弊模式]' : '🗡️ RPG 地牢探险'}
           </h1>
-          <p className="mt-2 text-slate-400">创建角色，探索地牢，击败怪物！</p>
+          <p className="mt-2 text-slate-400">
+            {cheatMode.enabled 
+              ? '作弊模式已激活！按 G/K/M/D 切换选项' 
+              : '创建角色，探索地牢，回合制战斗！'}
+          </p>
         </header>
+
+        {/* 作弊面板 */}
+        {cheatMode.enabled && (
+          <CheatPanel 
+            cheatMode={cheatMode} 
+            onToggle={toggleCheatOption}
+          />
+        )}
 
         {/* 游戏内容 */}
         <div className="mx-auto max-w-4xl">
@@ -41,6 +88,7 @@ function RpgGame() {
               battleState={battleState}
               onAction={playerAction}
               onSelectEnemy={selectEnemy}
+              animation={battleAnimation}
             />
           ) : gamePhase === 'gameOver' ? (
             <div className="rounded-2xl border border-red-500/50 bg-red-500/10 p-8 text-center">
@@ -71,12 +119,12 @@ function RpgGame() {
         <div className="mx-auto mt-10 max-w-4xl rounded-2xl border border-dark-600 bg-dark-800/30 p-5">
           <h3 className="mb-3 font-semibold text-slate-200">🎮 游戏说明</h3>
           <div className="grid grid-cols-1 gap-2 text-sm text-slate-400 sm:grid-cols-2">
-            <div>• 选择职业：战士（高防）、法师（高攻）、盗贼（高速）</div>
-            <div>• 探索：寻找敌人战斗获得经验和金币</div>
-            <div>• 战斗：点击敌人选择目标，使用技能消耗 MP</div>
-            <div>• 升级：提升等级可增加属性和 HP/MP</div>
-            <div>• 下一层：进入更深的地牢，敌人会更强</div>
-            <div>• 逃跑：战斗中可以尝试逃跑（50%成功率）</div>
+            <div>• 职业：战士(高防)、法师(高攻)、盗贼(高速)、圣骑士(坦克)、游侠(远程)</div>
+            <div>• 属性：力量/智力/敏捷/体质/灵巧/幸运影响不同能力</div>
+            <div>• 技能：攻击、增益、减益、治疗、群攻等多种类型</div>
+            <div>• 状态：中毒/灼烧/冰冻/眩晕/流血/再生等</div>
+            <div>• 探索：击败敌人获得经验和金币，每5层有Boss</div>
+            <div>• 彩蛋：连续点击标题5次激活作弊模式</div>
           </div>
         </div>
       </div>
