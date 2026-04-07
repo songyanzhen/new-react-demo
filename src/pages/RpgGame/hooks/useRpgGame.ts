@@ -412,15 +412,20 @@ export function useRpgGame() {
     // 设置冷却
     skill.currentCooldown = skill.cooldown
     
-    // 确定元素类型
+    // 确定元素类型（从状态效果类型推断）
     let elementType: 'fire' | 'ice' | 'poison' | undefined
     if (skill.statusEffect?.type === 'burn') elementType = 'fire'
     if (skill.statusEffect?.type === 'freeze') elementType = 'ice'
     if (skill.statusEffect?.type === 'poison') elementType = 'poison'
     
+    // 安全获取伤害倍率（默认为1）
+    const damageMultiplier = skill.damage || 1
+    
     switch (skill.target) {
       case 'single':
         const target = enemies[targetIndex]
+        if (!target) return // 目标不存在
+        
         if (skill.damage) {
           const result = performAttack(
             player, 
@@ -429,22 +434,34 @@ export function useRpgGame() {
             skill.damageType,
             elementType
           )
-          const totalDamage = Math.floor(result.damage * skill.damage)
-          target.hp -= totalDamage
           
-          let damageText = `${player.name} 使用 ${skill.name} 对 ${target.name} 造成 ${totalDamage} 点伤害`
-          if (result.isCrit) damageText += '（暴击！）'
-          if (result.isMiss) damageText = `${player.name} 的攻击miss了！`
-          log(damageText, result.isCrit ? 'crit' : 'damage')
+          if (result.isMiss) {
+            log(`${player.name} 使用 ${skill.name} 但 miss 了！`, 'miss')
+          } else {
+            const totalDamage = Math.floor(result.damage * damageMultiplier)
+            target.hp -= totalDamage
+            
+            let damageText = `${player.name} 使用 ${skill.name} 对 ${target.name} 造成 ${totalDamage} 点伤害`
+            if (result.isCrit) damageText += '（暴击！）'
+            log(damageText, result.isCrit ? 'crit' : 'damage')
+          }
         }
-        // 给敌人附加状态效果
-        if (skill.statusEffect && skill.type !== 'buff') {
-          target.statusEffects.push({ ...skill.statusEffect })
+        
+        // 给敌人附加状态效果（伤害技能和减益技能）
+        if (skill.statusEffect && skill.type !== 'buff' && skill.type !== 'heal') {
+          // 检查是否已有相同效果，有则刷新
+          const existingIndex = target.statusEffects.findIndex(e => e.type === skill.statusEffect!.type)
+          if (existingIndex >= 0) {
+            target.statusEffects[existingIndex] = { ...skill.statusEffect }
+          } else {
+            target.statusEffects.push({ ...skill.statusEffect })
+          }
           log(`${target.name} 受到了 ${skill.statusEffect.type} 效果！`, 'debuff')
         }
         break
         
       case 'all':
+        let totalDamageDealt = 0
         enemies.forEach(e => {
           if (skill.damage) {
             const result = performAttack(
@@ -454,51 +471,87 @@ export function useRpgGame() {
               skill.damageType,
               elementType
             )
-            e.hp -= Math.floor(result.damage * skill.damage)
+            if (!result.isMiss) {
+              const dmg = Math.floor(result.damage * damageMultiplier)
+              e.hp -= dmg
+              totalDamageDealt += dmg
+            }
           }
           // 群攻技能也附加状态
-          if (skill.statusEffect && skill.type !== 'buff') {
-            e.statusEffects.push({ ...skill.statusEffect })
+          if (skill.statusEffect && skill.type !== 'buff' && skill.type !== 'heal') {
+            const existingIndex = e.statusEffects.findIndex(ef => ef.type === skill.statusEffect!.type)
+            if (existingIndex >= 0) {
+              e.statusEffects[existingIndex] = { ...skill.statusEffect }
+            } else {
+              e.statusEffects.push({ ...skill.statusEffect })
+            }
           }
         })
-        log(`${player.name} 使用 ${skill.name} 对所有敌人造成伤害！`, 'damage')
+        log(`${player.name} 使用 ${skill.name} 对所有敌人造成 ${totalDamageDealt} 点总伤害！`, 'damage')
         break
         
       case 'random':
-        // 随机攻击多个目标
-        const hitCount = skill.damage || 1
-        for (let i = 0; i < hitCount; i++) {
+        // 随机攻击（技能damage字段表示攻击次数）
+        const attackCount = Math.floor(skill.damage || 1)
+        let randomTotalDamage = 0
+        for (let i = 0; i < attackCount; i++) {
           const randomTarget = enemies[Math.floor(Math.random() * enemies.length)]
-          if (randomTarget) {
+          if (randomTarget && randomTarget.hp > 0) {
             const result = performAttack(player, randomTarget, skill.damageType === 'magical')
-            randomTarget.hp -= Math.floor(result.damage * (skill.damage || 1))
+            if (!result.isMiss) {
+              randomTarget.hp -= result.damage
+              randomTotalDamage += result.damage
+            }
           }
         }
-        log(`${player.name} 使用 ${skill.name} 进行随机攻击！`, 'damage')
+        log(`${player.name} 使用 ${skill.name} 进行 ${attackCount} 次随机攻击，造成 ${randomTotalDamage} 点伤害！`, 'damage')
         break
         
       case 'self':
+        // 治疗
         if (skill.heal || skill.healPercent) {
-          const healAmount = skill.heal || Math.floor(player.maxHp * (skill.healPercent! / 100))
+          const healAmount = skill.heal || Math.floor(player.maxHp * ((skill.healPercent || 0) / 100))
           player.hp = Math.min(player.hp + healAmount, player.maxHp)
           log(`${player.name} 使用 ${skill.name} 恢复了 ${healAmount} 点生命值！`, 'heal')
         }
+        
+        // 状态效果（增益）
         if (skill.statusEffect) {
-          player.statusEffects.push({ ...skill.statusEffect })
+          const existingIndex = player.statusEffects.findIndex(e => e.type === skill.statusEffect!.type)
+          if (existingIndex >= 0) {
+            player.statusEffects[existingIndex] = { ...skill.statusEffect }
+          } else {
+            player.statusEffects.push({ ...skill.statusEffect })
+          }
           const type = skill.type === 'buff' ? 'buff' : 'debuff'
-          log(`${player.name} 获得了 ${skill.statusEffect.type} 效果！`, type)
+          log(`${player.name} 获得了 ${skill.statusEffect.type} 效果（${skill.statusEffect.duration}回合）！`, type)
         }
-        // 属性变化效果
+        
+        // 属性变化效果（通过calculateStats处理，这里只显示提示）
         if (skill.statChanges) {
           Object.entries(skill.statChanges).forEach(([key, value]) => {
             if (value) {
               const changeText = value > 0 ? '提升' : '降低'
-              log(`${player.name} 的 ${key} ${changeText}了 ${Math.abs(value)}！`, value > 0 ? 'buff' : 'debuff')
+              const label = getStatLabel(key)
+              log(`${player.name} 的 ${label} ${changeText}了 ${Math.abs(value)}%！`, value > 0 ? 'buff' : 'debuff')
             }
           })
         }
         break
     }
+  }
+  
+  // 辅助函数：获取属性中文名
+  const getStatLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      attack: '攻击力',
+      defense: '防御力',
+      speed: '速度',
+      critRate: '暴击率',
+      hitRate: '命中率',
+      evasion: '闪避率',
+    }
+    return labels[key] || key
   }
 
   // 结束玩家回合
@@ -519,20 +572,28 @@ export function useRpgGame() {
 
   // 处理状态效果（包括伤害、治疗、护盾等）
   const processStatusEffects = (player: Character, enemies: Enemy[]) => {
+    // 先处理护盾吸收（护盾不在这里减duration，在各自效果里处理）
+    let activeShield = player.statusEffects.find(e => e.type === 'shield')
+    
     // 玩家状态
     player.statusEffects = player.statusEffects.filter(effect => {
+      // 护盾单独处理duration
+      if (effect.type === 'shield') {
+        effect.duration--
+        return effect.duration > 0
+      }
+      
       switch (effect.type) {
         case 'poison':
         case 'burn':
         case 'bleed':
           // 护盾吸收伤害
-          const shieldEffect = player.statusEffects.find(e => e.type === 'shield')
-          if (shieldEffect) {
-            shieldEffect.value -= effect.value
-            addLog(`护盾吸收了 ${effect.value} 点伤害！`, 'buff')
-            if (shieldEffect.value <= 0) {
+          if (activeShield && activeShield.value > 0) {
+            activeShield.value -= effect.value
+            addLog(`护盾吸收了 ${effect.value} 点伤害！剩余 ${Math.max(0, activeShield.value)}`, 'buff')
+            if (activeShield.value <= 0) {
               addLog('护盾破碎了！', 'system')
-              player.statusEffects = player.statusEffects.filter(e => e.type !== 'shield')
+              activeShield = undefined // 护盾已破
             }
           } else {
             player.hp -= effect.value
@@ -544,6 +605,19 @@ export function useRpgGame() {
           player.hp = Math.min(player.hp + heal, player.maxHp)
           addLog(`${player.name} 恢复了 ${heal} 点生命值！`, 'heal')
           break
+        case 'freeze':
+        case 'stun':
+          addLog(`${player.name} 处于 ${effect.type} 状态，无法行动！`, 'debuff')
+          break
+        case 'buff_atk':
+        case 'buff_def':
+        case 'buff_spd':
+          // 增益效果由calculateStats处理，这里只记录
+          break
+        case 'debuff_atk':
+        case 'debuff_def':
+          // 减益效果由calculateStats处理，这里只记录
+          break
       }
       effect.duration--
       return effect.duration > 0
@@ -551,20 +625,41 @@ export function useRpgGame() {
 
     // 敌人状态（同样处理伤害类效果）
     enemies.forEach(enemy => {
+      let enemyShield = enemy.statusEffects.find(e => e.type === 'shield')
+      
       enemy.statusEffects = enemy.statusEffects.filter(effect => {
+        if (effect.type === 'shield') {
+          effect.duration--
+          return effect.duration > 0
+        }
+        
         if (effect.type === 'poison' || effect.type === 'burn' || effect.type === 'bleed') {
-          enemy.hp -= effect.value
+          if (enemyShield && enemyShield.value > 0) {
+            enemyShield.value -= effect.value
+            if (enemyShield.value <= 0) enemyShield = undefined
+          } else {
+            enemy.hp -= effect.value
+          }
         }
         effect.duration--
         return effect.duration > 0
       })
     })
     
-    // 处理技能冷却
+    // 处理技能冷却（玩家）
     player.skills.forEach(skill => {
       if (skill.currentCooldown > 0) {
         skill.currentCooldown--
       }
+    })
+    
+    // 处理技能冷却（敌人）
+    enemies.forEach(enemy => {
+      enemy.skills.forEach(skill => {
+        if (skill.currentCooldown > 0) {
+          skill.currentCooldown--
+        }
+      })
     })
   }
 
