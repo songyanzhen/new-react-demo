@@ -149,9 +149,33 @@ export function useRpgGame() {
     setGameLog([{ id: '1', text: `欢迎，${name}！你选择了${getClassName(characterClass)}职业。`, type: 'system', timestamp: Date.now() }])
   }, [])
 
-  // 计算实际属性（包含装备加成）
+  // 计算实际属性（包含装备加成和状态效果）
   const calculateStats = useCallback((character: Character): BaseStats => {
-    let stats = { ...character.baseStats }
+    const base = character.baseStats
+    let stats: BaseStats = {
+      // 基础属性直接复制
+      strength: base.strength,
+      intelligence: base.intelligence,
+      agility: base.agility,
+      vitality: base.vitality,
+      dexterity: base.dexterity,
+      luck: base.luck,
+      // 重新计算战斗属性
+      attack: base.strength * 2 + base.agility,
+      magicAttack: base.intelligence * 2 + base.dexterity,
+      defense: Math.floor(base.strength * 0.5 + base.vitality),
+      magicDefense: Math.floor(base.intelligence * 0.5 + base.vitality * 0.5),
+      // 重新计算高级属性
+      critRate: Math.min(5 + base.luck + Math.floor(base.dexterity * 0.3), 50),
+      critDamage: 150 + Math.floor(base.strength * 0.5),
+      hitRate: 90 + Math.floor(base.dexterity * 0.5),
+      evasion: Math.min(base.agility, 40),
+      speed: base.agility * 2 + Math.floor(base.strength * 0.5),
+      // 抗性（基础为0，可由装备加成）
+      fireResist: 0,
+      iceResist: 0,
+      poisonResist: 0,
+    }
     
     // 装备加成
     Object.values(character.equipment).forEach(item => {
@@ -164,12 +188,32 @@ export function useRpgGame() {
       }
     })
     
-    // 状态效果加成
+    // 状态效果加成（增益/减益）
     character.statusEffects.forEach(effect => {
-      if (effect.type === 'buff_atk') stats.attack = Math.floor(stats.attack * (1 + effect.value / 100))
-      if (effect.type === 'buff_def') stats.defense = Math.floor(stats.defense * (1 + effect.value / 100))
-      if (effect.type === 'buff_spd') stats.speed = Math.floor(stats.speed * (1 + effect.value / 100))
+      switch (effect.type) {
+        case 'buff_atk':
+          stats.attack = Math.floor(stats.attack * (1 + effect.value / 100))
+          break
+        case 'buff_def':
+          stats.defense = Math.floor(stats.defense * (1 + effect.value / 100))
+          break
+        case 'buff_spd':
+          stats.speed = Math.floor(stats.speed * (1 + effect.value / 100))
+          break
+        case 'debuff_atk':
+          stats.attack = Math.floor(stats.attack * (1 - effect.value / 100))
+          break
+        case 'debuff_def':
+          stats.defense = Math.floor(stats.defense * (1 - effect.value / 100))
+          break
+      }
     })
+    
+    // 确保属性不低于1
+    stats.attack = Math.max(1, stats.attack)
+    stats.magicAttack = Math.max(1, stats.magicAttack)
+    stats.defense = Math.max(0, stats.defense)
+    stats.magicDefense = Math.max(0, stats.magicDefense)
     
     return stats
   }, [])
@@ -178,11 +222,16 @@ export function useRpgGame() {
   const encounterEnemy = useCallback(() => {
     if (!player) return
     
+    // 确保玩家当前属性是最新的
+    const updatedPlayer = { ...player }
+    updatedPlayer.currentStats = calculateStats(updatedPlayer)
+    setPlayer(updatedPlayer)
+    
     // 检查是否触发Boss战
     const boss = getBossForFloor(currentFloor)
     if (boss) {
       setBattleState({
-        player: { ...player },
+        player: updatedPlayer,
         enemies: [{ ...boss }],
         turn: 1,
         currentTurn: 'player',
@@ -204,7 +253,7 @@ export function useRpgGame() {
     }
 
     setBattleState({
-      player: { ...player },
+      player: updatedPlayer,
       enemies,
       turn: 1,
       currentTurn: 'player',
@@ -214,7 +263,7 @@ export function useRpgGame() {
     })
     setGamePhase('battle')
     addLog(`遭遇了 ${enemies.map(e => e.name).join('、')}!`, 'system')
-  }, [player, currentFloor, addLog])
+  }, [player, currentFloor, addLog, calculateStats])
 
   // 玩家行动
   const playerAction = useCallback((action: 'attack' | 'skill' | 'item' | 'flee', skillOrItemId?: string) => {
@@ -298,13 +347,34 @@ export function useRpgGame() {
     endPlayerTurn(newBattleState, newPlayer, aliveEnemies)
   }, [battleState, player, cheatMode, addLog])
 
-  // 执行攻击
-  const performAttack = (attacker: Character | Enemy, defender: Character | Enemy, isMagic: boolean) => {
+  // 执行攻击（带元素抗性支持）
+  const performAttack = (
+    attacker: Character | Enemy, 
+    defender: Character | Enemy, 
+    isMagic: boolean,
+    damageType?: 'physical' | 'magical' | 'true',
+    elementType?: 'fire' | 'ice' | 'poison'
+  ) => {
     const attackerStats = 'currentStats' in attacker ? attacker.currentStats : attacker.stats
     const defenderStats = 'currentStats' in defender ? defender.currentStats : defender.stats
     
-    // 计算命中率
-    const hitChance = attackerStats.hitRate - defenderStats.evasion
+    // 真实伤害无视防御和闪避
+    if (damageType === 'true') {
+      const attackStat = attackerStats.attack
+      let damage = Math.max(1, attackStat)
+      
+      // 暴击判定
+      let isCrit = Math.random() * 100 < attackerStats.critRate
+      if (isCrit) {
+        damage = Math.floor(damage * (attackerStats.critDamage / 100))
+      }
+      
+      damage = Math.floor(damage * (0.9 + Math.random() * 0.2))
+      return { damage, isCrit, isMiss: false }
+    }
+    
+    // 计算命中率（基础命中率 - 目标闪避）
+    const hitChance = Math.max(5, Math.min(95, attackerStats.hitRate - defenderStats.evasion))
     if (Math.random() * 100 > hitChance) {
       return { damage: 0, isCrit: false, isMiss: true }
     }
@@ -314,43 +384,99 @@ export function useRpgGame() {
     const defenseStat = isMagic ? defenderStats.magicDefense : defenderStats.defense
     let damage = Math.max(1, attackStat - defenseStat)
     
+    // 元素抗性减免
+    if (elementType) {
+      let resist = 0
+      switch (elementType) {
+        case 'fire': resist = defenderStats.fireResist; break
+        case 'ice': resist = defenderStats.iceResist; break
+        case 'poison': resist = defenderStats.poisonResist; break
+      }
+      damage = Math.floor(damage * (1 - resist / 100))
+    }
+    
     // 暴击判定
     let isCrit = Math.random() * 100 < attackerStats.critRate
     if (isCrit) {
       damage = Math.floor(damage * (attackerStats.critDamage / 100))
     }
     
-    // 随机浮动
+    // 随机浮动 (90%-110%)
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2))
     
     return { damage, isCrit, isMiss: false }
   }
 
-  // 执行技能
+  // 执行技能（支持冷却、元素伤害、减益效果）
   const executeSkill = (skill: Skill, player: Character, enemies: Enemy[], targetIndex: number, log: typeof addLog) => {
+    // 设置冷却
+    skill.currentCooldown = skill.cooldown
+    
+    // 确定元素类型
+    let elementType: 'fire' | 'ice' | 'poison' | undefined
+    if (skill.statusEffect?.type === 'burn') elementType = 'fire'
+    if (skill.statusEffect?.type === 'freeze') elementType = 'ice'
+    if (skill.statusEffect?.type === 'poison') elementType = 'poison'
+    
     switch (skill.target) {
       case 'single':
         const target = enemies[targetIndex]
         if (skill.damage) {
-          const result = performAttack(player, target, skill.damageType === 'magical')
-          target.hp -= result.damage * skill.damage
-          log(`${player.name} 使用 ${skill.name} 对 ${target.name} 造成 ${Math.floor(result.damage * skill.damage)} 点伤害！`, 'damage')
+          const result = performAttack(
+            player, 
+            target, 
+            skill.damageType === 'magical',
+            skill.damageType,
+            elementType
+          )
+          const totalDamage = Math.floor(result.damage * skill.damage)
+          target.hp -= totalDamage
+          
+          let damageText = `${player.name} 使用 ${skill.name} 对 ${target.name} 造成 ${totalDamage} 点伤害`
+          if (result.isCrit) damageText += '（暴击！）'
+          if (result.isMiss) damageText = `${player.name} 的攻击miss了！`
+          log(damageText, result.isCrit ? 'crit' : 'damage')
         }
-        if (skill.heal || skill.healPercent) {
-          const healAmount = skill.heal || Math.floor(player.maxHp * (skill.healPercent! / 100))
-          player.hp = Math.min(player.hp + healAmount, player.maxHp)
-          log(`${player.name} 使用 ${skill.name} 恢复了 ${healAmount} 点生命值！`, 'heal')
+        // 给敌人附加状态效果
+        if (skill.statusEffect && skill.type !== 'buff') {
+          target.statusEffects.push({ ...skill.statusEffect })
+          log(`${target.name} 受到了 ${skill.statusEffect.type} 效果！`, 'debuff')
         }
         break
+        
       case 'all':
         enemies.forEach(e => {
           if (skill.damage) {
-            const result = performAttack(player, e, skill.damageType === 'magical')
-            e.hp -= result.damage * skill.damage
+            const result = performAttack(
+              player, 
+              e, 
+              skill.damageType === 'magical',
+              skill.damageType,
+              elementType
+            )
+            e.hp -= Math.floor(result.damage * skill.damage)
+          }
+          // 群攻技能也附加状态
+          if (skill.statusEffect && skill.type !== 'buff') {
+            e.statusEffects.push({ ...skill.statusEffect })
           }
         })
         log(`${player.name} 使用 ${skill.name} 对所有敌人造成伤害！`, 'damage')
         break
+        
+      case 'random':
+        // 随机攻击多个目标
+        const hitCount = skill.damage || 1
+        for (let i = 0; i < hitCount; i++) {
+          const randomTarget = enemies[Math.floor(Math.random() * enemies.length)]
+          if (randomTarget) {
+            const result = performAttack(player, randomTarget, skill.damageType === 'magical')
+            randomTarget.hp -= Math.floor(result.damage * (skill.damage || 1))
+          }
+        }
+        log(`${player.name} 使用 ${skill.name} 进行随机攻击！`, 'damage')
+        break
+        
       case 'self':
         if (skill.heal || skill.healPercent) {
           const healAmount = skill.heal || Math.floor(player.maxHp * (skill.healPercent! / 100))
@@ -359,7 +485,17 @@ export function useRpgGame() {
         }
         if (skill.statusEffect) {
           player.statusEffects.push({ ...skill.statusEffect })
-          log(`${player.name} 获得了 ${skill.statusEffect.type} 效果！`, 'buff')
+          const type = skill.type === 'buff' ? 'buff' : 'debuff'
+          log(`${player.name} 获得了 ${skill.statusEffect.type} 效果！`, type)
+        }
+        // 属性变化效果
+        if (skill.statChanges) {
+          Object.entries(skill.statChanges).forEach(([key, value]) => {
+            if (value) {
+              const changeText = value > 0 ? '提升' : '降低'
+              log(`${player.name} 的 ${key} ${changeText}了 ${Math.abs(value)}！`, value > 0 ? 'buff' : 'debuff')
+            }
+          })
         }
         break
     }
@@ -381,28 +517,54 @@ export function useRpgGame() {
     }, 1000)
   }
 
-  // 处理状态效果
+  // 处理状态效果（包括伤害、治疗、护盾等）
   const processStatusEffects = (player: Character, enemies: Enemy[]) => {
     // 玩家状态
     player.statusEffects = player.statusEffects.filter(effect => {
-      if (effect.type === 'poison' || effect.type === 'burn' || effect.type === 'bleed') {
-        player.hp -= effect.value
-        addLog(`${player.name} 受到 ${effect.value} 点 ${effect.type} 伤害！`, 'damage')
-      } else if (effect.type === 'regen') {
-        const heal = Math.floor(player.maxHp * (effect.value / 100))
-        player.hp = Math.min(player.hp + heal, player.maxHp)
-        addLog(`${player.name} 恢复了 ${heal} 点生命值！`, 'heal')
+      switch (effect.type) {
+        case 'poison':
+        case 'burn':
+        case 'bleed':
+          // 护盾吸收伤害
+          const shieldEffect = player.statusEffects.find(e => e.type === 'shield')
+          if (shieldEffect) {
+            shieldEffect.value -= effect.value
+            addLog(`护盾吸收了 ${effect.value} 点伤害！`, 'buff')
+            if (shieldEffect.value <= 0) {
+              addLog('护盾破碎了！', 'system')
+              player.statusEffects = player.statusEffects.filter(e => e.type !== 'shield')
+            }
+          } else {
+            player.hp -= effect.value
+            addLog(`${player.name} 受到 ${effect.value} 点 ${effect.type} 伤害！`, 'damage')
+          }
+          break
+        case 'regen':
+          const heal = Math.floor(player.maxHp * (effect.value / 100))
+          player.hp = Math.min(player.hp + heal, player.maxHp)
+          addLog(`${player.name} 恢复了 ${heal} 点生命值！`, 'heal')
+          break
       }
       effect.duration--
       return effect.duration > 0
     })
 
-    // 敌人状态
+    // 敌人状态（同样处理伤害类效果）
     enemies.forEach(enemy => {
       enemy.statusEffects = enemy.statusEffects.filter(effect => {
+        if (effect.type === 'poison' || effect.type === 'burn' || effect.type === 'bleed') {
+          enemy.hp -= effect.value
+        }
         effect.duration--
         return effect.duration > 0
       })
+    })
+    
+    // 处理技能冷却
+    player.skills.forEach(skill => {
+      if (skill.currentCooldown > 0) {
+        skill.currentCooldown--
+      }
     })
   }
 
@@ -427,22 +589,68 @@ export function useRpgGame() {
         return
       }
       
-      // AI 选择行动
-      const useSkill = enemy.skills.length > 0 && enemy.mp >= 10 && Math.random() > 0.6
+      // AI 根据类型选择行动
+      let actionTaken = false
       
-      if (useSkill && enemy.skills[0]) {
-        const skill = enemy.skills[0]
-        enemy.mp -= skill.mpCost
-        if (skill.damage) {
-          const result = performAttack(enemy, newPlayer, skill.damageType === 'magical')
-          const damage = Math.floor(result.damage * (skill.damage || 1))
-          newPlayer.hp -= damage
-          addLog(`${enemy.name} 使用 ${skill.name} 造成 ${damage} 点伤害！`, 'damage')
+      // 支援型AI：优先治疗
+      if (enemy.aiType === 'support' && enemy.skills.some(s => s.type === 'heal' || s.heal)) {
+        const healSkill = enemy.skills.find(s => s.type === 'heal' && enemy.mp >= s.mpCost)
+        if (healSkill && enemy.hp < enemy.maxHp * 0.5) {
+          const healAmount = healSkill.heal || Math.floor(enemy.maxHp * (healSkill.healPercent! / 100))
+          enemy.hp = Math.min(enemy.hp + healAmount, enemy.maxHp)
+          enemy.mp -= healSkill.mpCost
+          addLog(`${enemy.name} 使用 ${healSkill.name} 恢复了生命值！`, 'heal')
+          actionTaken = true
         }
-      } else {
+      }
+      
+      // 防御型AI：低血量时使用防御技能
+      if (!actionTaken && enemy.aiType === 'defensive' && enemy.hp < enemy.maxHp * 0.3) {
+        const buffSkill = enemy.skills.find(s => s.type === 'buff' && enemy.mp >= s.mpCost)
+        if (buffSkill) {
+          enemy.statusEffects.push({ ...buffSkill.statusEffect! })
+          enemy.mp -= buffSkill.mpCost
+          addLog(`${enemy.name} 使用 ${buffSkill.name}！`, 'buff')
+          actionTaken = true
+        }
+      }
+      
+      // Boss AI：更频繁使用技能
+      const skillChance = enemy.aiType === 'boss' ? 0.8 : 0.6
+      
+      if (!actionTaken && enemy.skills.length > 0 && Math.random() < skillChance) {
+        // 选择可用的最强技能
+        const availableSkills = enemy.skills.filter(s => enemy.mp >= s.mpCost && s.currentCooldown === 0)
+        if (availableSkills.length > 0) {
+          // 按伤害排序，优先使用高伤害技能
+          const bestSkill = availableSkills.sort((a, b) => (b.damage || 0) - (a.damage || 0))[0]
+          enemy.mp -= bestSkill.mpCost
+          bestSkill.currentCooldown = bestSkill.cooldown
+          
+          if (bestSkill.damage) {
+            const result = performAttack(
+              enemy, 
+              newPlayer, 
+              bestSkill.damageType === 'magical',
+              bestSkill.damageType
+            )
+            const damage = Math.floor(result.damage * (bestSkill.damage || 1))
+            newPlayer.hp -= damage
+            addLog(`${enemy.name} 使用 ${bestSkill.name} 造成 ${damage} 点伤害！`, 'damage')
+          }
+          actionTaken = true
+        }
+      }
+      
+      // 普通攻击
+      if (!actionTaken) {
         const result = performAttack(enemy, newPlayer, false)
-        newPlayer.hp -= result.damage
-        addLog(`${enemy.name} 造成 ${result.damage} 点伤害！`, 'damage')
+        if (result.isMiss) {
+          addLog(`${enemy.name} 的攻击miss了！`, 'miss')
+        } else {
+          newPlayer.hp -= result.damage
+          addLog(`${enemy.name} 造成 ${result.damage} 点伤害！`, 'damage')
+        }
       }
     })
 

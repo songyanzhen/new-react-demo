@@ -181,24 +181,41 @@ export function BattleScene({ battleState, onAction, onSelectEnemy, animation }:
             </button>
             {/* 技能菜单 */}
             {showSkillMenu && (
-              <div className="absolute bottom-full left-0 mb-2 w-56 rounded-xl border border-dark-600 bg-dark-800 p-2 shadow-xl z-10">
-                {player.skills.map((skill) => (
-                  <button
-                    key={skill.id}
-                    onClick={() => {
-                      onAction('skill', skill.id)
-                      setShowSkillMenu(false)
-                    }}
-                    disabled={player.mp < skill.mpCost}
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-dark-700 disabled:opacity-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-200">{skill.icon} {skill.name}</span>
-                      <span className="text-xs text-blue-400">{skill.mpCost} MP</span>
-                    </div>
-                    <div className="text-xs text-slate-400">{skill.description}</div>
-                  </button>
-                ))}
+              <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-dark-600 bg-dark-800 p-2 shadow-xl z-10 max-h-80 overflow-y-auto">
+                {player.skills.map((skill) => {
+                  const isOnCooldown = skill.currentCooldown > 0
+                  const canAfford = player.mp >= skill.mpCost
+                  
+                  return (
+                    <button
+                      key={skill.id}
+                      onClick={() => {
+                        if (!isOnCooldown && canAfford) {
+                          onAction('skill', skill.id)
+                          setShowSkillMenu(false)
+                        }
+                      }}
+                      disabled={isOnCooldown || !canAfford}
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-200">
+                          {skill.icon} {skill.name}
+                          {isOnCooldown && (
+                            <span className="ml-2 text-xs text-red-400">[冷却 {skill.currentCooldown}]</span>
+                          )}
+                        </span>
+                        <span className={`text-xs ${canAfford ? 'text-blue-400' : 'text-red-400'}`}>
+                          {skill.mpCost} MP
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400">{skill.description}</div>
+                      {skill.cooldown > 0 && (
+                        <div className="text-xs text-yellow-500">冷却: {skill.cooldown}回合</div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
