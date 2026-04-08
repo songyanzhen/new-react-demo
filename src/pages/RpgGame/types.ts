@@ -114,10 +114,11 @@ export interface Item {
   effect: {
     hpRestore?: number
     mpRestore?: number
-    statBoost?: Partial<BaseStats>
+    statBoost?: Partial<BaseStats> & { maxHp?: number; maxMp?: number }
     statusEffect?: StatusEffect
   }
   value: number
+  upgradeLevel?: number  // 强化等级
 }
 
 // 技能目标

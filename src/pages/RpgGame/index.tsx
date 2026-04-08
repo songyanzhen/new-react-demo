@@ -17,6 +17,7 @@ function RpgGame() {
     gameLog,
     currentFloor,
     floorExploreCount,
+    exploreScene,
     cheatMode,
     battleAnimation,
     startGame,
@@ -25,6 +26,13 @@ function RpgGame() {
     selectEnemy,
     nextFloor,
     useItem,
+    buyItem,
+    restAtCamp,
+    upgradeEquipment,
+    equipItem,
+    unequipItem,
+    learnSkill,
+    setExploreView,
     handleTitleClick,
     toggleCheatOption,
   } = useRpgGame()
@@ -110,9 +118,17 @@ function RpgGame() {
               currentFloor={currentFloor}
               gameLog={gameLog}
               floorExploreCount={floorExploreCount}
+              exploreScene={exploreScene}
               onEncounter={encounterEnemy}
               onNextFloor={nextFloor}
               onUseItem={useItem}
+              onBuyItem={buyItem}
+              onRest={restAtCamp}
+              onUpgrade={upgradeEquipment}
+              onEquip={equipItem}
+              onUnequip={unequipItem}
+              onLearnSkill={learnSkill}
+              onSetScene={setExploreView}
             />
           )}
         </div>

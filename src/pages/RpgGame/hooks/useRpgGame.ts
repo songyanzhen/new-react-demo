@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import type { 
   Character, CharacterClass, GamePhase, BattleState, Enemy, Skill, 
-  Inventory, BaseStats, CheatMode, BattleLogEntry 
+  Inventory, BaseStats, CheatMode, BattleLogEntry, Item 
 } from '../types'
 import { getRandomEnemy, getBossForFloor } from '../data/enemies'
 import { getCharacterSkills } from '../data/skills'
@@ -93,6 +93,9 @@ export function useRpgGame() {
   const [currentFloor, setCurrentFloor] = useState(1)
   const [floorExploreCount, setFloorExploreCount] = useState(0)  // 当前楼层探索次数（最多3次）
   const [battleAnimation, setBattleAnimation] = useState<string | null>(null)
+  
+  // 探索场景状态: 'main' | 'shop' | 'rest' | 'blacksmith'
+  const [exploreScene, setExploreScene] = useState<'main' | 'shop' | 'rest' | 'blacksmith'>('main')
   
   // 作弊模式
   const [cheatMode, setCheatMode] = useState<CheatMode>({
@@ -1037,6 +1040,211 @@ export function useRpgGame() {
     setInventory({ ...inventory, items: newItems })
   }, [player, inventory, addLog])
 
+  // 购买物品
+  const buyItem = useCallback((item: Item) => {
+    if (!player || inventory.gold < item.value) return
+    
+    // 检查背包空间
+    const existingItem = inventory.items.find(i => i.item.id === item.id)
+    if (!existingItem && inventory.items.length >= inventory.maxSlots) {
+      addLog('背包已满！', 'system')
+      return
+    }
+    
+    // 扣除金币
+    setInventory(prev => ({
+      ...prev,
+      gold: prev.gold - item.value,
+      items: existingItem
+        ? prev.items.map(i => i.item.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
+        : [...prev.items, { item: { ...item }, quantity: 1 }]
+    }))
+    
+    addLog(`购买了 ${item.name}，花费 ${item.value} 金币`, 'system')
+  }, [player, inventory, addLog])
+
+  // 休息恢复
+  const restAtCamp = useCallback((type: 'hp' | 'mp' | 'full', cost: number) => {
+    if (!player || inventory.gold < cost) return
+    
+    let healedHp = 0
+    let healedMp = 0
+    
+    if (type === 'hp' || type === 'full') {
+      healedHp = player.maxHp - player.hp
+      setPlayer({ ...player, hp: player.maxHp })
+    }
+    if (type === 'mp' || type === 'full') {
+      healedMp = player.maxMp - player.mp
+      setPlayer({ ...player, mp: player.maxMp })
+    }
+    
+    setInventory(prev => ({ ...prev, gold: prev.gold - cost }))
+    
+    if (type === 'full') {
+      addLog(`完全恢复！花费 ${cost} 金币`, 'heal')
+    } else if (type === 'hp') {
+      addLog(`恢复 ${healedHp} 生命值，花费 ${cost} 金币`, 'heal')
+    } else {
+      addLog(`恢复 ${healedMp} 魔法值，花费 ${cost} 金币`, 'heal')
+    }
+  }, [player, inventory, addLog])
+
+  // 强化装备
+  const upgradeEquipment = useCallback((item: Item, cost: number) => {
+    if (!player || inventory.gold < cost) return
+    
+    const currentLevel = item.upgradeLevel || 0
+    if (currentLevel >= 5) {
+      addLog('该装备已达到最高强化等级！', 'system')
+      return
+    }
+    
+    const upgradeLevel = currentLevel + 1
+    
+    // 更新装备属性
+    const upgradedItem: Item = {
+      ...item,
+      upgradeLevel,
+      value: Math.floor(item.value * 1.2), // 强化后价值提升
+      effect: {
+        ...item.effect,
+        statBoost: item.effect.statBoost 
+          ? Object.fromEntries(
+              Object.entries(item.effect.statBoost).map(([key, value]) => [
+                key,
+                typeof value === 'number' ? Math.floor(value * (1 + 0.1)) : value
+              ])
+            ) as any
+          : undefined
+      }
+    }
+    
+    // 更新玩家装备
+    const slot = player.equipment.weapon?.id === item.id ? 'weapon' 
+      : player.equipment.armor?.id === item.id ? 'armor'
+      : player.equipment.accessory?.id === item.id ? 'accessory'
+      : null
+    
+    if (slot) {
+      setPlayer({
+        ...player,
+        equipment: { ...player.equipment, [slot]: upgradedItem },
+        currentStats: calculateStats({ ...player, equipment: { ...player.equipment, [slot]: upgradedItem } })
+      })
+    }
+    
+    setInventory(prev => ({ ...prev, gold: prev.gold - cost }))
+    addLog(`${item.name} 强化成功！+${upgradeLevel}`, 'buff')
+  }, [player, inventory, addLog, calculateStats])
+
+  // 穿戴/卸下装备
+  const equipItem = useCallback((item: Item) => {
+    if (!player) return
+    
+    const slot = item.type === 'weapon' ? 'weapon' 
+      : item.type === 'armor' ? 'armor'
+      : item.type === 'accessory' ? 'accessory'
+      : null
+    
+    if (!slot) return
+    
+    const currentEquip = player.equipment[slot]
+    
+    // 如果该位置已有装备，先卸下
+    if (currentEquip) {
+      // 卸下当前装备到背包
+      setInventory(prev => ({
+        ...prev,
+        items: [...prev.items, { item: currentEquip, quantity: 1 }]
+      }))
+    }
+    
+    // 穿上新装备
+    setPlayer({
+      ...player,
+      equipment: { ...player.equipment, [slot]: item },
+      currentStats: calculateStats({ ...player, equipment: { ...player.equipment, [slot]: item } })
+    })
+    
+    addLog(`装备了 ${item.name}`, 'buff')
+  }, [player, addLog, calculateStats])
+
+  // 卸下装备
+  const unequipItem = useCallback((slot: 'weapon' | 'armor' | 'accessory') => {
+    if (!player || !player.equipment[slot]) return
+    
+    const item = player.equipment[slot]!
+    
+    // 检查背包空间
+    if (inventory.items.length >= inventory.maxSlots) {
+      addLog('背包已满，无法卸下装备！', 'system')
+      return
+    }
+    
+    setPlayer({
+      ...player,
+      equipment: { ...player.equipment, [slot]: null },
+      currentStats: calculateStats({ ...player, equipment: { ...player.equipment, [slot]: null } })
+    })
+    
+    setInventory(prev => ({
+      ...prev,
+      items: [...prev.items, { item, quantity: 1 }]
+    }))
+    
+    addLog(`卸下了 ${item.name}`, 'system')
+  }, [player, inventory, addLog, calculateStats])
+
+  // 学习技能
+  const learnSkill = useCallback((skillBook: Item) => {
+    if (!player) return
+    
+    // 从技能书ID解析技能
+    const skillId = skillBook.id.replace('book_', '')
+    const skillMap: Record<string, { name: string; id: string }> = {
+      'fireball': { name: '火球术', id: 'fireball' },
+      'ice_shard': { name: '冰锥术', id: 'ice_shard' },
+      'lightning': { name: '连锁闪电', id: 'lightning' },
+      'heal': { name: '治疗术', id: 'heal' },
+      'whirlwind': { name: '旋风斩', id: 'whirlwind' },
+      'power_attack': { name: '强力打击', id: 'power_attack' },
+    }
+    
+    const skillInfo = skillMap[skillId]
+    if (!skillInfo) return
+    
+    // 检查是否已学习
+    if (player.skills.some(s => s.id === skillInfo.id)) {
+      addLog(`已经学会了 ${skillInfo.name}！`, 'system')
+      return
+    }
+    
+    // 从 skills.ts 导入技能
+    import('../data/skills').then(({ CLASS_SKILLS }) => {
+      let newSkill: Skill | null = null
+      
+      // 在所有职业技能中查找
+      Object.values(CLASS_SKILLS).forEach(skills => {
+        const found = skills.find(s => s.id === skillInfo.id)
+        if (found) newSkill = { ...found }
+      })
+      
+      if (newSkill) {
+        setPlayer({
+          ...player,
+          skills: [...player.skills, newSkill]
+        })
+        addLog(`学会了新技能：${skillInfo.name}！`, 'buff')
+      }
+    })
+  }, [player, addLog])
+
+  // 切换探索场景
+  const setExploreView = useCallback((scene: 'main' | 'shop' | 'rest' | 'blacksmith') => {
+    setExploreScene(scene)
+  }, [])
+
   return {
     gamePhase,
     player,
@@ -1045,6 +1253,7 @@ export function useRpgGame() {
     gameLog,
     currentFloor,
     floorExploreCount,
+    exploreScene,
     cheatMode,
     battleAnimation,
     startGame,
@@ -1053,6 +1262,13 @@ export function useRpgGame() {
     selectEnemy,
     nextFloor,
     useItem,
+    buyItem,
+    restAtCamp,
+    upgradeEquipment,
+    equipItem,
+    unequipItem,
+    learnSkill,
+    setExploreView,
     handleTitleClick,
     toggleCheatOption,
   }

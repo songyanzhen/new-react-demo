@@ -1,15 +1,26 @@
 import { useState, useRef, useEffect } from 'react'
-import type { Character, Inventory } from '../types'
+import type { Character, Inventory, Item } from '../types'
+import { Shop } from './Shop'
+import { RestStation } from './RestStation'
+import { Blacksmith } from './Blacksmith'
 
 interface ExploreSceneProps {
   player: Character
   inventory: Inventory
   currentFloor: number
   gameLog: { id: string; text: string; type: string; timestamp: number }[]
-  floorExploreCount: number  // 当前楼层探索次数
+  floorExploreCount: number
+  exploreScene: 'main' | 'shop' | 'rest' | 'blacksmith'
   onEncounter: () => void
   onNextFloor: () => void
   onUseItem: (index: number) => void
+  onBuyItem: (item: Item) => void
+  onRest: (type: 'hp' | 'mp' | 'full', cost: number) => void
+  onUpgrade: (item: Item, cost: number) => void
+  onEquip: (item: Item) => void
+  onUnequip: (slot: 'weapon' | 'armor' | 'accessory') => void
+  onLearnSkill: (skillBook: Item) => void
+  onSetScene: (scene: 'main' | 'shop' | 'rest' | 'blacksmith') => void
 }
 
 export function ExploreScene({
@@ -18,11 +29,20 @@ export function ExploreScene({
   currentFloor,
   gameLog,
   floorExploreCount,
+  exploreScene,
   onEncounter,
   onNextFloor,
   onUseItem,
+  onBuyItem,
+  onRest,
+  onUpgrade,
+  onEquip,
+  onUnequip,
+  onLearnSkill,
+  onSetScene,
 }: ExploreSceneProps) {
   const [showStats, setShowStats] = useState(false)
+  const [showEquipment, setShowEquipment] = useState(false)
   const logRef = useRef<HTMLDivElement>(null)
 
   // 冒险日志自动滚动到底部
@@ -55,6 +75,129 @@ export function ExploreScene({
     }
     return names[className] || className
   }
+
+  // 渲染主探索界面
+  const renderMainScene = () => (
+    <>
+      {/* 当前位置 */}
+      <div className="rounded-2xl border border-dark-600 bg-dark-800/50 p-6 text-center shadow-lg backdrop-blur">
+        <div className="mb-2 text-6xl">🏰</div>
+        <h2 className="text-2xl font-bold text-slate-100">第 {currentFloor} 层</h2>
+        <p className="text-slate-400">危险的地牢深处...</p>
+        {currentFloor % 5 === 0 && (
+          <div className="mt-2 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-400">
+            ⚠️ BOSS 区域
+          </div>
+        )}
+      </div>
+
+      {/* 行动按钮 */}
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={onEncounter}
+          disabled={floorExploreCount >= 3}
+          className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
+            floorExploreCount >= 3
+              ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
+              : 'border-red-500/50 bg-red-500/10 hover:bg-red-500/20'
+          }`}
+        >
+          <div className={`mb-2 text-4xl transition ${floorExploreCount >= 3 ? '' : 'group-hover:scale-110'}`}>
+            {floorExploreCount >= 3 ? '✅' : '⚔️'}
+          </div>
+          <div className={`font-bold ${floorExploreCount >= 3 ? 'text-slate-400' : 'text-red-400'}`}>
+            {floorExploreCount >= 3 ? '已探索' : '探索'}
+          </div>
+          <div className={`text-sm ${floorExploreCount >= 3 ? 'text-slate-500' : 'text-red-400/70'}`}>
+            {floorExploreCount >= 3 
+              ? '本层已清理' 
+              : `寻找敌人 (${floorExploreCount}/3)`}
+          </div>
+        </button>
+
+        <button
+          onClick={onNextFloor}
+          disabled={floorExploreCount === 0}
+          className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
+            floorExploreCount === 0
+              ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
+              : 'border-green-500/50 bg-green-500/10 hover:bg-green-500/20'
+          }`}
+        >
+          <div className={`mb-2 text-4xl transition ${floorExploreCount === 0 ? '' : 'group-hover:scale-110'}`}>
+            🚪
+          </div>
+          <div className={`font-bold ${floorExploreCount === 0 ? 'text-slate-400' : 'text-green-400'}`}>
+            下一层
+          </div>
+          <div className={`text-sm ${floorExploreCount === 0 ? 'text-slate-500' : 'text-green-400/70'}`}>
+            {floorExploreCount === 0 ? '需先探索' : '进入更深的地牢'}
+          </div>
+        </button>
+      </div>
+
+      {/* 设施按钮 */}
+      <div className="grid grid-cols-3 gap-3">
+        <button
+          onClick={() => onSetScene('shop')}
+          className="rounded-xl border border-yellow-500/50 bg-yellow-500/10 p-4 text-center transition hover:bg-yellow-500/20"
+        >
+          <div className="mb-1 text-2xl">🏪</div>
+          <div className="text-sm font-medium text-yellow-400">商店</div>
+        </button>
+        <button
+          onClick={() => onSetScene('rest')}
+          className="rounded-xl border border-green-500/50 bg-green-500/10 p-4 text-center transition hover:bg-green-500/20"
+        >
+          <div className="mb-1 text-2xl">🏕️</div>
+          <div className="text-sm font-medium text-green-400">营地</div>
+        </button>
+        <button
+          onClick={() => onSetScene('blacksmith')}
+          className="rounded-xl border border-orange-500/50 bg-orange-500/10 p-4 text-center transition hover:bg-orange-500/20"
+        >
+          <div className="mb-1 text-2xl">🔨</div>
+          <div className="text-sm font-medium text-orange-400">铁匠铺</div>
+        </button>
+      </div>
+    </>
+  )
+
+  // 渲染商店场景
+  const renderShopScene = () => (
+    <Shop
+      currentFloor={currentFloor}
+      inventory={inventory}
+      onBuy={(item) => {
+        if (item.type === 'material') {
+          onLearnSkill(item)
+        } else {
+          onBuyItem(item)
+        }
+      }}
+      onClose={() => onSetScene('main')}
+    />
+  )
+
+  // 渲染休息站场景
+  const renderRestScene = () => (
+    <RestStation
+      player={player}
+      inventory={inventory}
+      onRest={onRest}
+      onClose={() => onSetScene('main')}
+    />
+  )
+
+  // 渲染铁匠铺场景
+  const renderBlacksmithScene = () => (
+    <Blacksmith
+      player={player}
+      inventory={inventory}
+      onUpgrade={onUpgrade}
+      onClose={() => onSetScene('main')}
+    />
+  )
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -174,6 +317,91 @@ export function ExploreScene({
               </div>
             </div>
           )}
+
+          {/* 装备信息 */}
+          <button
+            onClick={() => setShowEquipment(!showEquipment)}
+            className="mt-3 w-full rounded-lg bg-dark-700/50 py-1.5 text-xs text-slate-400 transition hover:bg-dark-600/50"
+          >
+            {showEquipment ? '隐藏装备 ▲' : '显示装备 ▼'}
+          </button>
+
+          {showEquipment && (
+            <div className="mt-3 space-y-2">
+              {/* 武器 */}
+              <div className="flex items-center justify-between rounded-lg bg-dark-900/50 p-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">武器</span>
+                  {player.equipment.weapon ? (
+                    <span className="text-orange-400">
+                      {player.equipment.weapon.icon} {player.equipment.weapon.name}
+                      {player.equipment.weapon.upgradeLevel && player.equipment.weapon.upgradeLevel > 0 && (
+                        <span className="text-yellow-400"> +{player.equipment.weapon.upgradeLevel}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-slate-600">无</span>
+                  )}
+                </div>
+                {player.equipment.weapon && (
+                  <button
+                    onClick={() => onUnequip('weapon')}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    卸下
+                  </button>
+                )}
+              </div>
+              {/* 护甲 */}
+              <div className="flex items-center justify-between rounded-lg bg-dark-900/50 p-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">护甲</span>
+                  {player.equipment.armor ? (
+                    <span className="text-blue-400">
+                      {player.equipment.armor.icon} {player.equipment.armor.name}
+                      {player.equipment.armor.upgradeLevel && player.equipment.armor.upgradeLevel > 0 && (
+                        <span className="text-yellow-400"> +{player.equipment.armor.upgradeLevel}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-slate-600">无</span>
+                  )}
+                </div>
+                {player.equipment.armor && (
+                  <button
+                    onClick={() => onUnequip('armor')}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    卸下
+                  </button>
+                )}
+              </div>
+              {/* 饰品 */}
+              <div className="flex items-center justify-between rounded-lg bg-dark-900/50 p-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">饰品</span>
+                  {player.equipment.accessory ? (
+                    <span className="text-purple-400">
+                      {player.equipment.accessory.icon} {player.equipment.accessory.name}
+                      {player.equipment.accessory.upgradeLevel && player.equipment.accessory.upgradeLevel > 0 && (
+                        <span className="text-yellow-400"> +{player.equipment.accessory.upgradeLevel}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-slate-600">无</span>
+                  )}
+                </div>
+                {player.equipment.accessory && (
+                  <button
+                    onClick={() => onUnequip('accessory')}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    卸下
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 背包 */}
@@ -185,85 +413,56 @@ export function ExploreScene({
           {inventory.items.length === 0 ? (
             <p className="text-sm text-slate-500">背包是空的</p>
           ) : (
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className="space-y-2 max-h-60 overflow-y-auto">
               {inventory.items.map((entry, index) => (
-                <button
+                <div
                   key={index}
-                  onClick={() => onUseItem(index)}
-                  className="flex w-full items-center justify-between rounded-lg bg-dark-900/50 p-2 text-left text-sm transition hover:bg-dark-700/50"
+                  className="flex items-center justify-between rounded-lg bg-dark-900/50 p-2 text-sm"
                 >
-                  <span className="text-slate-200">{entry.item.icon || '📦'} {entry.item.name}</span>
                   <div className="flex items-center gap-2">
+                    <span>{entry.item.icon || '📦'}</span>
+                    <span className="text-slate-200">{entry.item.name}</span>
                     <span className="text-xs text-slate-400">x{entry.quantity}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     {entry.item.type === 'consumable' && (
-                      <span className="text-xs text-green-400">使用</span>
+                      <button
+                        onClick={() => onUseItem(index)}
+                        className="text-xs text-green-400 hover:text-green-300"
+                      >
+                        使用
+                      </button>
+                    )}
+                    {(entry.item.type === 'weapon' || entry.item.type === 'armor' || entry.item.type === 'accessory') && (
+                      <button
+                        onClick={() => onEquip(entry.item)}
+                        className="text-xs text-blue-400 hover:text-blue-300"
+                      >
+                        装备
+                      </button>
+                    )}
+                    {entry.item.type === 'material' && (
+                      <button
+                        onClick={() => onLearnSkill(entry.item)}
+                        className="text-xs text-purple-400 hover:text-purple-300"
+                      >
+                        学习
+                      </button>
                     )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* 中间：探索区域 */}
+      {/* 中间：探索区域 / 设施 */}
       <div className="lg:col-span-2 space-y-4">
-        {/* 当前位置 */}
-        <div className="rounded-2xl border border-dark-600 bg-dark-800/50 p-6 text-center shadow-lg backdrop-blur">
-          <div className="mb-2 text-6xl">🏰</div>
-          <h2 className="text-2xl font-bold text-slate-100">第 {currentFloor} 层</h2>
-          <p className="text-slate-400">危险的地牢深处...</p>
-          {currentFloor % 5 === 0 && (
-            <div className="mt-2 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-400">
-              ⚠️ BOSS 区域
-            </div>
-          )}
-        </div>
-
-        {/* 行动按钮 */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={onEncounter}
-            disabled={floorExploreCount >= 3}
-            className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
-              floorExploreCount >= 3
-                ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
-                : 'border-red-500/50 bg-red-500/10 hover:bg-red-500/20'
-            }`}
-          >
-            <div className={`mb-2 text-4xl transition ${floorExploreCount >= 3 ? '' : 'group-hover:scale-110'}`}>
-              {floorExploreCount >= 3 ? '✅' : '⚔️'}
-            </div>
-            <div className={`font-bold ${floorExploreCount >= 3 ? 'text-slate-400' : 'text-red-400'}`}>
-              {floorExploreCount >= 3 ? '已探索' : '探索'}
-            </div>
-            <div className={`text-sm ${floorExploreCount >= 3 ? 'text-slate-500' : 'text-red-400/70'}`}>
-              {floorExploreCount >= 3 
-                ? '本层已清理' 
-                : `寻找敌人 (${floorExploreCount}/3)`}
-            </div>
-          </button>
-
-          <button
-            onClick={onNextFloor}
-            disabled={floorExploreCount === 0}
-            className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
-              floorExploreCount === 0
-                ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
-                : 'border-green-500/50 bg-green-500/10 hover:bg-green-500/20'
-            }`}
-          >
-            <div className={`mb-2 text-4xl transition ${floorExploreCount === 0 ? '' : 'group-hover:scale-110'}`}>
-              🚪
-            </div>
-            <div className={`font-bold ${floorExploreCount === 0 ? 'text-slate-400' : 'text-green-400'}`}>
-              下一层
-            </div>
-            <div className={`text-sm ${floorExploreCount === 0 ? 'text-slate-500' : 'text-green-400/70'}`}>
-              {floorExploreCount === 0 ? '需先探索' : '进入更深的地牢'}
-            </div>
-          </button>
-        </div>
+        {exploreScene === 'main' && renderMainScene()}
+        {exploreScene === 'shop' && renderShopScene()}
+        {exploreScene === 'rest' && renderRestScene()}
+        {exploreScene === 'blacksmith' && renderBlacksmithScene()}
 
         {/* 游戏日志 */}
         <div className="rounded-2xl border border-dark-600 bg-dark-800/50 p-5 shadow-lg backdrop-blur">
