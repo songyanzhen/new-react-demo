@@ -228,6 +228,8 @@ export interface BattleState {
   selectedSkill?: Skill
   battleLog: BattleLogEntry[]
   isAnimating: boolean
+  endingCountdown?: number  // 战斗结束倒计时（秒）
+  endingMessage?: string    // 战斗结束提示信息
 }
 
 // 战斗日志条目

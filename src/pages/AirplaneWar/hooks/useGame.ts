@@ -766,7 +766,7 @@ export function useGame(options: UseGameOptions = {}) {
         if (playerHpRatio <= 0.3) {
           // 低血量时60%概率掉落治疗
           powerUpTypes = ['heal', 'heal', 'heal', 'power', 'shield']
-        } else if (currentPlayer.powerLevel >= PLAYER_MAX_POWER) {
+        } else if (currentPlayer.powerLevel && currentPlayer.powerLevel >= PLAYER_MAX_POWER) {
           // 满火力时减少火力道具，增加护盾
           powerUpTypes = ['heal', 'shield', 'shield', 'power', 'heal']
         } else {

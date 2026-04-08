@@ -243,7 +243,7 @@ interface ScanLineProps {
 }
 
 // 扫描线效果（全局）- 使用 pattern 优化性能
-export function ScanLines({ width, height }: ScanLineProps) {
+export function ScanLines({ }: ScanLineProps) {
   return (
     <defs>
       <pattern id="scanlines" x="0" y="0" width="1" height="4" patternUnits="userSpaceOnUse">
@@ -259,7 +259,7 @@ interface VignetteProps {
 }
 
 // 暗角效果
-export function Vignette({ width, height }: VignetteProps) {
+export function Vignette({ }: VignetteProps) {
   return (
     <defs>
       <radialGradient id="vignetteGrad" cx="50%" cy="50%" r="70%">

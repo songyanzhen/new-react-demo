@@ -346,7 +346,7 @@ export const BOSS_ENEMIES: Enemy[] = [
 ]
 
 // 辅助函数
-export function getRandomEnemy(playerLevel: number, floor: number): Enemy {
+export function getRandomEnemy(_playerLevel: number, floor: number): Enemy {
   let availableEnemies: Enemy[] = []
   
   if (floor <= 1) {

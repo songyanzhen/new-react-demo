@@ -1,4 +1,4 @@
-import type { Skill, CharacterClass, StatusEffect } from '../types'
+import type { Skill, CharacterClass } from '../types'
 
 // 通用技能
 export const COMMON_SKILLS: Skill[] = [

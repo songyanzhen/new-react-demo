@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { CharacterClass } from '../../types'
+import type { CharacterClass } from '../types'
 
 interface CharacterCreateProps {
   onCreate: (name: string, characterClass: CharacterClass) => void

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import type { BattleState, Skill } from '../types'
+import { useState, useEffect, useRef } from 'react'
+import type { BattleState } from '../types'
 
 interface BattleSceneProps {
   battleState: BattleState
@@ -9,9 +9,35 @@ interface BattleSceneProps {
 }
 
 export function BattleScene({ battleState, onAction, onSelectEnemy, animation }: BattleSceneProps) {
-  const { player, enemies, currentTurn, selectedEnemyIndex, battleLog } = battleState
+  const { player, enemies, currentTurn, selectedEnemyIndex, battleLog, endingCountdown, endingMessage } = battleState
   const [showSkillMenu, setShowSkillMenu] = useState(false)
   const [animatingEnemy, setAnimatingEnemy] = useState<number | null>(null)
+  const [countdown, setCountdown] = useState(endingCountdown || 0)
+  const logRef = useRef<HTMLDivElement>(null)
+
+  // 战斗日志自动滚动到底部
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight
+    }
+  }, [battleLog])
+
+  // 战斗结束倒计时
+  useEffect(() => {
+    if (endingCountdown) {
+      setCountdown(endingCountdown)
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+      return () => clearInterval(timer)
+    }
+  }, [endingCountdown])
 
   // 动画效果
   useEffect(() => {
@@ -162,8 +188,13 @@ export function BattleScene({ battleState, onAction, onSelectEnemy, animation }:
         )}
       </div>
 
-      {/* 战斗操作 */}
-      {currentTurn === 'player' && (
+      {/* 战斗操作 / 结束提示 */}
+      {endingCountdown ? (
+        <div className="rounded-xl border border-yellow-500/50 bg-yellow-500/10 p-4 text-center">
+          <div className="text-lg font-bold text-yellow-400">{endingMessage}</div>
+          <div className="mt-1 text-sm text-yellow-400/70">{countdown} 秒后返回...</div>
+        </div>
+      ) : currentTurn === 'player' && (
         <div className="grid grid-cols-4 gap-3">
           <button
             onClick={() => onAction('attack')}
@@ -230,7 +261,7 @@ export function BattleScene({ battleState, onAction, onSelectEnemy, animation }:
       )}
 
       {/* 战斗日志 */}
-      <div className="mt-6 h-40 overflow-y-auto rounded-xl border border-dark-600 bg-dark-900/30 p-3">
+      <div ref={logRef} className="mt-6 h-40 overflow-y-auto rounded-xl border border-dark-600 bg-dark-900/30 p-3">
         {battleLog.length === 0 ? (
           <div className="text-sm text-slate-500">战斗开始！</div>
         ) : (

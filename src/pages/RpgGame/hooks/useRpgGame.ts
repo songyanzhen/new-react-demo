@@ -1,9 +1,9 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { 
   Character, CharacterClass, GamePhase, BattleState, Enemy, Skill, 
-  Item, Inventory, StatusEffect, BaseStats, CheatMode, BattleLogEntry 
+  Inventory, BaseStats, CheatMode, BattleLogEntry 
 } from '../types'
-import { getRandomEnemy, getBoss, getBossForFloor } from '../data/enemies'
+import { getRandomEnemy, getBossForFloor } from '../data/enemies'
 import { getCharacterSkills } from '../data/skills'
 
 // ==================== 初始角色创建 ====================
@@ -91,6 +91,7 @@ export function useRpgGame() {
   const [inventory, setInventory] = useState<Inventory>({ items: [], gold: 100, maxSlots: 20 })
   const [gameLog, setGameLog] = useState<BattleLogEntry[]>([{ id: '1', text: '欢迎来到 RPG 世界！', type: 'system', timestamp: Date.now() }])
   const [currentFloor, setCurrentFloor] = useState(1)
+  const [floorExploreCount, setFloorExploreCount] = useState(0)  // 当前楼层探索次数（最多3次）
   const [battleAnimation, setBattleAnimation] = useState<string | null>(null)
   
   // 作弊模式
@@ -106,14 +107,26 @@ export function useRpgGame() {
   const titleClickCount = useRef(0)
   const lastClickTime = useRef(0)
 
-  // 添加日志
+  // 添加日志（同时更新 gameLog 和 battleState.battleLog）
   const addLog = useCallback((text: string, type: BattleLogEntry['type'] = 'normal') => {
-    setGameLog(prev => [...prev.slice(-19), {
+    const newEntry: BattleLogEntry = {
       id: Math.random().toString(36).substr(2, 9),
       text,
       type,
       timestamp: Date.now(),
-    }])
+    }
+    
+    // 更新探索日志
+    setGameLog(prev => [...prev.slice(-19), newEntry])
+    
+    // 如果在战斗中，也更新战斗日志
+    setBattleState(prev => {
+      if (!prev) return null
+      return {
+        ...prev,
+        battleLog: [...prev.battleLog.slice(-19), newEntry]
+      }
+    })
   }, [])
 
   // 彩蛋：连续点击标题5次激活作弊模式
@@ -222,6 +235,15 @@ export function useRpgGame() {
   const encounterEnemy = useCallback(() => {
     if (!player) return
     
+    // 检查探索次数（最多3次）
+    if (floorExploreCount >= 3) {
+      addLog('本层已经探索完毕，请前往下一层！', 'system')
+      return
+    }
+    
+    // 增加探索次数
+    setFloorExploreCount(prev => prev + 1)
+    
     // 确保玩家当前属性是最新的
     const updatedPlayer = { ...player }
     updatedPlayer.currentStats = calculateStats(updatedPlayer)
@@ -263,7 +285,7 @@ export function useRpgGame() {
     })
     setGamePhase('battle')
     addLog(`遭遇了 ${enemies.map(e => e.name).join('、')}!`, 'system')
-  }, [player, currentFloor, addLog, calculateStats])
+  }, [player, currentFloor, floorExploreCount, addLog, calculateStats])
 
   // 玩家行动
   const playerAction = useCallback((action: 'attack' | 'skill' | 'item' | 'flee', skillOrItemId?: string) => {
@@ -272,32 +294,54 @@ export function useRpgGame() {
     let newBattleState = { ...battleState }
     let newPlayer = { ...battleState.player }
     let newEnemies = [...battleState.enemies]
+    let newBattleLog = [...battleState.battleLog]  // 本地管理 battleLog
+
+    // 辅助函数：添加战斗日志到本地
+    const addBattleLog = (text: string, type: BattleLogEntry['type'] = 'normal') => {
+      const entry: BattleLogEntry = {
+        id: Math.random().toString(36).substr(2, 9),
+        text,
+        type,
+        timestamp: Date.now(),
+      }
+      newBattleLog.push(entry)
+      // 同时更新探索日志
+      setGameLog(prev => [...prev.slice(-19), entry])
+    }
 
     // 处理状态效果（如冰冻、眩晕）
     const canAct = !newPlayer.statusEffects.some(e => e.type === 'freeze' || e.type === 'stun')
     if (!canAct) {
-      addLog('你无法行动！', 'system')
-      endPlayerTurn(newBattleState, newPlayer, newEnemies)
+      addBattleLog('你无法行动！', 'system')
+      endPlayerTurn({ ...newBattleState, battleLog: newBattleLog }, newPlayer, newEnemies)
       return
     }
 
     // 作弊模式：一击必杀
     if (cheatMode.enabled && cheatMode.oneHitKill && action === 'attack') {
       newEnemies.forEach(e => e.hp = 0)
-      addLog('作弊：一击必杀！', 'system')
+      addBattleLog('作弊：一击必杀！', 'system')
     }
 
     if (action === 'attack') {
       const target = newEnemies[battleState.selectedEnemyIndex]
       const result = performAttack(newPlayer, target, false)
-      target.hp -= result.damage
       
-      addLog(`${newPlayer.name} 对 ${target.name} 造成 ${result.damage} 点伤害${result.isCrit ? '（暴击！）' : ''}!`, result.isCrit ? 'crit' : 'damage')
-      setBattleAnimation('attack')
-      
-      if (result.isCrit) {
-        addLog('暴击！', 'crit')
+      if (result.isMiss) {
+        addBattleLog(`${target.name} 闪避了 ${newPlayer.name} 的攻击！`, 'miss')
+      } else {
+        target.hp -= result.damage
+        
+        let attackText = `${newPlayer.name} 对 ${target.name} 造成 ${result.damage} 点伤害`
+        if (result.isCrit) attackText += '（暴击！）'
+        addBattleLog(attackText, result.isCrit ? 'crit' : 'damage')
+        
+        // 检查敌人是否被击败
+        if (target.hp <= 0) {
+          addBattleLog(`${target.name} 被击败了！`, 'system')
+        }
       }
+      setBattleAnimation('attack')
     } else if (action === 'skill' && skillOrItemId) {
       const skill = newPlayer.skills.find(s => s.id === skillOrItemId)
       if (skill && (cheatMode.infiniteMP || newPlayer.mp >= skill.mpCost)) {
@@ -305,17 +349,17 @@ export function useRpgGame() {
           newPlayer.mp -= skill.mpCost
         }
         
-        // 执行技能
-        executeSkill(skill, newPlayer, newEnemies, battleState.selectedEnemyIndex, addLog)
+        // 执行技能（传递本地日志函数）
+        executeSkill(skill, newPlayer, newEnemies, battleState.selectedEnemyIndex, addBattleLog)
         setBattleAnimation(skill.animation)
       }
     } else if (action === 'flee') {
       if (Math.random() > 0.5) {
+        addBattleLog('成功逃跑了！', 'system')
         setGamePhase('explore')
-        addLog('成功逃跑了！', 'system')
         return
       } else {
-        addLog('逃跑失败！', 'system')
+        addBattleLog('逃跑失败！', 'system')
       }
     }
 
@@ -334,16 +378,32 @@ export function useRpgGame() {
       // Boss死亡台词
       const boss = battleState.enemies.find(e => e.isBoss)
       if (boss?.deathText) {
-        addLog(`${boss.name}: "${boss.deathText}"`, 'system')
+        addBattleLog(`${boss.name}: "${boss.deathText}"`, 'system')
       }
       
-      addLog(`战斗胜利！获得 ${totalExp} 经验值和 ${totalGold} 金币！${leveledUp ? '升级了！' : ''}`, 'system')
-      setGamePhase('explore')
+      addBattleLog(`战斗胜利！获得 ${totalExp} 经验值和 ${totalGold} 金币！${leveledUp ? '升级了！' : ''}`, 'system')
+      addBattleLog('战斗结束，3秒后返回探索...', 'system')
+      
+      // 设置战斗结束状态（倒计时）
+      newBattleState.player = newPlayer
+      newBattleState.enemies = aliveEnemies
+      newBattleState.battleLog = newBattleLog
+      newBattleState.currentTurn = 'player'
+      newBattleState.endingCountdown = 3
+      newBattleState.endingMessage = '战斗胜利！'
+      setBattleState(newBattleState)
+      
+      // 3秒后返回探索
+      setTimeout(() => {
+        setGamePhase('explore')
+        setBattleState(null)
+      }, 3000)
       return
     }
 
     newBattleState.player = newPlayer
     newBattleState.enemies = aliveEnemies
+    newBattleState.battleLog = newBattleLog
     endPlayerTurn(newBattleState, newPlayer, aliveEnemies)
   }, [battleState, player, cheatMode, addLog])
 
@@ -436,7 +496,7 @@ export function useRpgGame() {
           )
           
           if (result.isMiss) {
-            log(`${player.name} 使用 ${skill.name} 但 miss 了！`, 'miss')
+            log(`${player.name} 使用 ${skill.name}，但 ${target.name} 闪避了攻击！`, 'miss')
           } else {
             const totalDamage = Math.floor(result.damage * damageMultiplier)
             target.hp -= totalDamage
@@ -444,11 +504,16 @@ export function useRpgGame() {
             let damageText = `${player.name} 使用 ${skill.name} 对 ${target.name} 造成 ${totalDamage} 点伤害`
             if (result.isCrit) damageText += '（暴击！）'
             log(damageText, result.isCrit ? 'crit' : 'damage')
+            
+            // 检查敌人是否被击败
+            if (target.hp <= 0) {
+              log(`${target.name} 被击败了！`, 'system')
+            }
           }
         }
         
         // 给敌人附加状态效果（伤害技能和减益技能）
-        if (skill.statusEffect && skill.type !== 'buff' && skill.type !== 'heal') {
+        if (skill.statusEffect && skill.type !== 'buff' && skill.type !== 'heal' && target.hp > 0) {
           // 检查是否已有相同效果，有则刷新
           const existingIndex = target.statusEffects.findIndex(e => e.type === skill.statusEffect!.type)
           if (existingIndex >= 0) {
@@ -462,6 +527,10 @@ export function useRpgGame() {
         
       case 'all':
         let totalDamageDealt = 0
+        let hitCount = 0
+        let missCount = 0
+        let defeatedEnemies: string[] = []
+        
         enemies.forEach(e => {
           if (skill.damage) {
             const result = performAttack(
@@ -471,40 +540,76 @@ export function useRpgGame() {
               skill.damageType,
               elementType
             )
-            if (!result.isMiss) {
+            if (result.isMiss) {
+              missCount++
+              log(`${e.name} 闪避了 ${skill.name}！`, 'miss')
+            } else {
               const dmg = Math.floor(result.damage * damageMultiplier)
               e.hp -= dmg
               totalDamageDealt += dmg
+              hitCount++
+              
+              let hitText = `${skill.name} 对 ${e.name} 造成 ${dmg} 点伤害`
+              if (result.isCrit) hitText += '（暴击！）'
+              log(hitText, result.isCrit ? 'crit' : 'damage')
+              
+              // 检查敌人是否被击败
+              if (e.hp <= 0) {
+                defeatedEnemies.push(e.name)
+                log(`${e.name} 被击败了！`, 'system')
+              }
             }
           }
           // 群攻技能也附加状态
-          if (skill.statusEffect && skill.type !== 'buff' && skill.type !== 'heal') {
+          if (skill.statusEffect && skill.type !== 'buff' && skill.type !== 'heal' && e.hp > 0) {
             const existingIndex = e.statusEffects.findIndex(ef => ef.type === skill.statusEffect!.type)
             if (existingIndex >= 0) {
               e.statusEffects[existingIndex] = { ...skill.statusEffect }
             } else {
               e.statusEffects.push({ ...skill.statusEffect })
             }
+            log(`${e.name} 受到了 ${skill.statusEffect.type} 效果！`, 'debuff')
           }
         })
-        log(`${player.name} 使用 ${skill.name} 对所有敌人造成 ${totalDamageDealt} 点总伤害！`, 'damage')
+        
+        // 汇总信息
+        let summaryText = `${player.name} 使用 ${skill.name} `
+        if (hitCount > 0) summaryText += `命中 ${hitCount} 个目标`
+        if (missCount > 0) summaryText += `${hitCount > 0 ? '，' : ''}${missCount} 个闪避`
+        summaryText += `，共造成 ${totalDamageDealt} 点伤害`
+        log(summaryText, 'damage')
         break
         
       case 'random':
         // 随机攻击（技能damage字段表示攻击次数）
         const attackCount = Math.floor(skill.damage || 1)
         let randomTotalDamage = 0
+        
         for (let i = 0; i < attackCount; i++) {
-          const randomTarget = enemies[Math.floor(Math.random() * enemies.length)]
-          if (randomTarget && randomTarget.hp > 0) {
-            const result = performAttack(player, randomTarget, skill.damageType === 'magical')
-            if (!result.isMiss) {
-              randomTarget.hp -= result.damage
-              randomTotalDamage += result.damage
+          // 过滤出存活的敌人
+          const aliveEnemies = enemies.filter(e => e.hp > 0)
+          if (aliveEnemies.length === 0) break
+          
+          const randomTarget = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]
+          const result = performAttack(player, randomTarget, skill.damageType === 'magical')
+          
+          if (result.isMiss) {
+            log(`第 ${i + 1} 击：${randomTarget.name} 闪避了！`, 'miss')
+          } else {
+            randomTarget.hp -= result.damage
+            randomTotalDamage += result.damage
+            
+            let hitMsg = `第 ${i + 1} 击对 ${randomTarget.name} 造成 ${result.damage} 点伤害`
+            if (result.isCrit) hitMsg += '（暴击！）'
+            log(hitMsg, result.isCrit ? 'crit' : 'damage')
+            
+            // 检查敌人是否被击败
+            if (randomTarget.hp <= 0) {
+              log(`${randomTarget.name} 被击败了！`, 'system')
             }
           }
         }
-        log(`${player.name} 使用 ${skill.name} 进行 ${attackCount} 次随机攻击，造成 ${randomTotalDamage} 点伤害！`, 'damage')
+        log(`${player.name} 使用 ${skill.name} 进行 ${attackCount} 次随机攻击，总计造成 ${randomTotalDamage} 点伤害！`, 'damage')
         break
         
       case 'self':
@@ -556,22 +661,38 @@ export function useRpgGame() {
 
   // 结束玩家回合
   const endPlayerTurn = (state: BattleState, player: Character, enemies: Enemy[]) => {
+    let battleLog = [...state.battleLog]  // 本地管理 battleLog
+
+    // 辅助函数：添加战斗日志到本地
+    const addBattleLog = (text: string, type: BattleLogEntry['type'] = 'normal') => {
+      const entry: BattleLogEntry = {
+        id: Math.random().toString(36).substr(2, 9),
+        text,
+        type,
+        timestamp: Date.now(),
+      }
+      battleLog.push(entry)
+      // 同时更新探索日志
+      setGameLog(prev => [...prev.slice(-19), entry])
+    }
+
     // 处理状态效果（如中毒、灼烧）
-    processStatusEffects(player, enemies)
+    processStatusEffects(player, enemies, addBattleLog)
     
     state.currentTurn = 'enemy'
     state.player = player
     state.enemies = enemies
+    state.battleLog = battleLog  // 更新 battleLog
     setBattleState(state)
     setPlayer(player)
 
     setTimeout(() => {
-      enemyTurn({ ...state, player, enemies })
+      enemyTurn({ ...state, player, enemies, battleLog })
     }, 1000)
   }
 
   // 处理状态效果（包括伤害、治疗、护盾等）
-  const processStatusEffects = (player: Character, enemies: Enemy[]) => {
+  const processStatusEffects = (player: Character, enemies: Enemy[], log?: typeof addLog) => {
     // 先处理护盾吸收（护盾不在这里减duration，在各自效果里处理）
     let activeShield = player.statusEffects.find(e => e.type === 'shield')
     
@@ -590,24 +711,26 @@ export function useRpgGame() {
           // 护盾吸收伤害
           if (activeShield && activeShield.value > 0) {
             activeShield.value -= effect.value
-            addLog(`护盾吸收了 ${effect.value} 点伤害！剩余 ${Math.max(0, activeShield.value)}`, 'buff')
+            if (log) {
+              log(`护盾吸收了 ${effect.value} 点伤害！剩余 ${Math.max(0, activeShield.value)}`, 'buff')
+            }
             if (activeShield.value <= 0) {
-              addLog('护盾破碎了！', 'system')
+              if (log) log('护盾破碎了！', 'system')
               activeShield = undefined // 护盾已破
             }
           } else {
             player.hp -= effect.value
-            addLog(`${player.name} 受到 ${effect.value} 点 ${effect.type} 伤害！`, 'damage')
+            if (log) log(`${player.name} 受到 ${effect.value} 点 ${effect.type} 伤害！`, 'damage')
           }
           break
         case 'regen':
           const heal = Math.floor(player.maxHp * (effect.value / 100))
           player.hp = Math.min(player.hp + heal, player.maxHp)
-          addLog(`${player.name} 恢复了 ${heal} 点生命值！`, 'heal')
+          if (log) log(`${player.name} 恢复了 ${heal} 点生命值！`, 'heal')
           break
         case 'freeze':
         case 'stun':
-          addLog(`${player.name} 处于 ${effect.type} 状态，无法行动！`, 'debuff')
+          if (log) log(`${player.name} 处于 ${effect.type} 状态，无法行动！`, 'debuff')
           break
         case 'buff_atk':
         case 'buff_def':
@@ -630,15 +753,27 @@ export function useRpgGame() {
       enemy.statusEffects = enemy.statusEffects.filter(effect => {
         if (effect.type === 'shield') {
           effect.duration--
+          if (enemyShield && enemyShield.value <= 0) {
+            if (log) log(`${enemy.name} 的护盾破碎了！`, 'system')
+          }
           return effect.duration > 0
         }
         
         if (effect.type === 'poison' || effect.type === 'burn' || effect.type === 'bleed') {
           if (enemyShield && enemyShield.value > 0) {
             enemyShield.value -= effect.value
-            if (enemyShield.value <= 0) enemyShield = undefined
+            if (log) log(`${enemy.name} 的护盾吸收了 ${effect.value} 点伤害！`, 'buff')
+            if (enemyShield.value <= 0) {
+              if (log) log(`${enemy.name} 的护盾破碎了！`, 'system')
+              enemyShield = undefined
+            }
           } else {
             enemy.hp -= effect.value
+            if (log) log(`${enemy.name} 受到 ${effect.value} 点 ${effect.type} 伤害！`, 'damage')
+            // 检查敌人是否被击败
+            if (enemy.hp <= 0) {
+              if (log) log(`${enemy.name} 被击败了！`, 'system')
+            }
           }
         }
         effect.duration--
@@ -667,6 +802,20 @@ export function useRpgGame() {
   const enemyTurn = (currentState: BattleState) => {
     let newState = { ...currentState }
     let newPlayer = { ...currentState.player }
+    let newBattleLog = [...currentState.battleLog]  // 本地管理 battleLog
+
+    // 辅助函数：添加战斗日志到本地
+    const addBattleLog = (text: string, type: BattleLogEntry['type'] = 'normal') => {
+      const entry: BattleLogEntry = {
+        id: Math.random().toString(36).substr(2, 9),
+        text,
+        type,
+        timestamp: Date.now(),
+      }
+      newBattleLog.push(entry)
+      // 同时更新探索日志
+      setGameLog(prev => [...prev.slice(-19), entry])
+    }
 
     currentState.enemies.forEach(enemy => {
       if (enemy.hp <= 0) return
@@ -674,13 +823,13 @@ export function useRpgGame() {
       // 检查是否可以行动
       const canAct = !enemy.statusEffects.some(e => e.type === 'freeze' || e.type === 'stun')
       if (!canAct) {
-        addLog(`${enemy.name} 无法行动！`, 'system')
+        addBattleLog(`${enemy.name} 无法行动！`, 'system')
         return
       }
       
       // 作弊模式：无敌
       if (cheatMode.enabled && cheatMode.godMode) {
-        addLog('作弊：无敌模式，敌人攻击无效！', 'system')
+        addBattleLog('作弊：无敌模式，敌人攻击无效！', 'system')
         return
       }
       
@@ -694,7 +843,7 @@ export function useRpgGame() {
           const healAmount = healSkill.heal || Math.floor(enemy.maxHp * (healSkill.healPercent! / 100))
           enemy.hp = Math.min(enemy.hp + healAmount, enemy.maxHp)
           enemy.mp -= healSkill.mpCost
-          addLog(`${enemy.name} 使用 ${healSkill.name} 恢复了生命值！`, 'heal')
+          addBattleLog(`${enemy.name} 使用 ${healSkill.name} 恢复了生命值！`, 'heal')
           actionTaken = true
         }
       }
@@ -705,7 +854,7 @@ export function useRpgGame() {
         if (buffSkill) {
           enemy.statusEffects.push({ ...buffSkill.statusEffect! })
           enemy.mp -= buffSkill.mpCost
-          addLog(`${enemy.name} 使用 ${buffSkill.name}！`, 'buff')
+          addBattleLog(`${enemy.name} 使用 ${buffSkill.name}！`, 'buff')
           actionTaken = true
         }
       }
@@ -729,9 +878,15 @@ export function useRpgGame() {
               bestSkill.damageType === 'magical',
               bestSkill.damageType
             )
-            const damage = Math.floor(result.damage * (bestSkill.damage || 1))
-            newPlayer.hp -= damage
-            addLog(`${enemy.name} 使用 ${bestSkill.name} 造成 ${damage} 点伤害！`, 'damage')
+            if (result.isMiss) {
+              addBattleLog(`${newPlayer.name} 闪避了 ${enemy.name} 的 ${bestSkill.name}！`, 'miss')
+            } else {
+              const damage = Math.floor(result.damage * (bestSkill.damage || 1))
+              newPlayer.hp -= damage
+              let skillText = `${enemy.name} 使用 ${bestSkill.name} 造成 ${damage} 点伤害`
+              if (result.isCrit) skillText += '（暴击！）'
+              addBattleLog(skillText, result.isCrit ? 'crit' : 'damage')
+            }
           }
           actionTaken = true
         }
@@ -741,10 +896,12 @@ export function useRpgGame() {
       if (!actionTaken) {
         const result = performAttack(enemy, newPlayer, false)
         if (result.isMiss) {
-          addLog(`${enemy.name} 的攻击miss了！`, 'miss')
+          addBattleLog(`${newPlayer.name} 闪避了 ${enemy.name} 的攻击！`, 'miss')
         } else {
           newPlayer.hp -= result.damage
-          addLog(`${enemy.name} 造成 ${result.damage} 点伤害！`, 'damage')
+          let attackText = `${enemy.name} 造成 ${result.damage} 点伤害`
+          if (result.isCrit) attackText += '（暴击！）'
+          addBattleLog(attackText, result.isCrit ? 'crit' : 'damage')
         }
       }
     })
@@ -752,13 +909,29 @@ export function useRpgGame() {
     // 检查玩家死亡
     if (newPlayer.hp <= 0 && !(cheatMode.enabled && cheatMode.godMode)) {
       newPlayer.hp = 0
-      setGamePhase('gameOver')
-      addLog('你倒下了...游戏结束。', 'system')
+      addBattleLog('你倒下了...', 'system')
+      addBattleLog('战斗结束，3秒后返回...', 'system')
+      
+      newState.player = newPlayer
+      newState.currentTurn = 'player'
+      newState.battleLog = newBattleLog
+      newState.endingCountdown = 3
+      newState.endingMessage = '战斗失败...'
+      setBattleState(newState)
+      setPlayer(newPlayer)
+      
+      // 3秒后跳转到游戏结束
+      setTimeout(() => {
+        setGamePhase('gameOver')
+        setBattleState(null)
+      }, 3000)
+      return
     }
 
     newState.player = newPlayer
     newState.currentTurn = 'player'
     newState.turn += 1
+    newState.battleLog = newBattleLog
     setBattleState(newState)
     setPlayer(newPlayer)
   }
@@ -814,11 +987,16 @@ export function useRpgGame() {
 
   // 下一层
   const nextFloor = useCallback(() => {
-    setCurrentFloor(prev => {
-      const newFloor = prev + 1
-      addLog(`进入第 ${newFloor} 层！`, 'system')
-      return newFloor
-    })
+    // 检查是否至少探索过一次
+    if (floorExploreCount === 0) {
+      addLog('请先探索本层至少一次！', 'system')
+      return
+    }
+    
+    const newFloor = currentFloor + 1
+    setCurrentFloor(newFloor)
+    setFloorExploreCount(0)  // 重置探索计数
+    addLog(`进入第 ${newFloor} 层！`, 'system')
     
     if (player) {
       setPlayer({
@@ -827,7 +1005,7 @@ export function useRpgGame() {
         mp: Math.min(player.mp + 10, player.maxMp),
       })
     }
-  }, [player, addLog])
+  }, [currentFloor, floorExploreCount, player, addLog])
 
   // 使用物品
   const useItem = useCallback((itemIndex: number) => {
@@ -866,6 +1044,7 @@ export function useRpgGame() {
     inventory,
     gameLog,
     currentFloor,
+    floorExploreCount,
     cheatMode,
     battleAnimation,
     startGame,

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Character, Inventory } from '../types'
 
 interface ExploreSceneProps {
@@ -6,6 +6,7 @@ interface ExploreSceneProps {
   inventory: Inventory
   currentFloor: number
   gameLog: { id: string; text: string; type: string; timestamp: number }[]
+  floorExploreCount: number  // 当前楼层探索次数
   onEncounter: () => void
   onNextFloor: () => void
   onUseItem: (index: number) => void
@@ -16,11 +17,20 @@ export function ExploreScene({
   inventory,
   currentFloor,
   gameLog,
+  floorExploreCount,
   onEncounter,
   onNextFloor,
   onUseItem,
 }: ExploreSceneProps) {
   const [showStats, setShowStats] = useState(false)
+  const logRef = useRef<HTMLDivElement>(null)
+
+  // 冒险日志自动滚动到底部
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight
+    }
+  }, [gameLog])
 
   // 获取职业图标
   const getClassIcon = (className: string) => {
@@ -214,27 +224,51 @@ export function ExploreScene({
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={onEncounter}
-            className="group relative overflow-hidden rounded-2xl border border-red-500/50 bg-red-500/10 p-6 text-center transition hover:bg-red-500/20"
+            disabled={floorExploreCount >= 3}
+            className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
+              floorExploreCount >= 3
+                ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
+                : 'border-red-500/50 bg-red-500/10 hover:bg-red-500/20'
+            }`}
           >
-            <div className="mb-2 text-4xl transition group-hover:scale-110">⚔️</div>
-            <div className="font-bold text-red-400">探索</div>
-            <div className="text-sm text-red-400/70">寻找敌人战斗</div>
+            <div className={`mb-2 text-4xl transition ${floorExploreCount >= 3 ? '' : 'group-hover:scale-110'}`}>
+              {floorExploreCount >= 3 ? '✅' : '⚔️'}
+            </div>
+            <div className={`font-bold ${floorExploreCount >= 3 ? 'text-slate-400' : 'text-red-400'}`}>
+              {floorExploreCount >= 3 ? '已探索' : '探索'}
+            </div>
+            <div className={`text-sm ${floorExploreCount >= 3 ? 'text-slate-500' : 'text-red-400/70'}`}>
+              {floorExploreCount >= 3 
+                ? '本层已清理' 
+                : `寻找敌人 (${floorExploreCount}/3)`}
+            </div>
           </button>
 
           <button
             onClick={onNextFloor}
-            className="group relative overflow-hidden rounded-2xl border border-green-500/50 bg-green-500/10 p-6 text-center transition hover:bg-green-500/20"
+            disabled={floorExploreCount === 0}
+            className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
+              floorExploreCount === 0
+                ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
+                : 'border-green-500/50 bg-green-500/10 hover:bg-green-500/20'
+            }`}
           >
-            <div className="mb-2 text-4xl transition group-hover:scale-110">🚪</div>
-            <div className="font-bold text-green-400">下一层</div>
-            <div className="text-sm text-green-400/70">进入更深的地牢</div>
+            <div className={`mb-2 text-4xl transition ${floorExploreCount === 0 ? '' : 'group-hover:scale-110'}`}>
+              🚪
+            </div>
+            <div className={`font-bold ${floorExploreCount === 0 ? 'text-slate-400' : 'text-green-400'}`}>
+              下一层
+            </div>
+            <div className={`text-sm ${floorExploreCount === 0 ? 'text-slate-500' : 'text-green-400/70'}`}>
+              {floorExploreCount === 0 ? '需先探索' : '进入更深的地牢'}
+            </div>
           </button>
         </div>
 
         {/* 游戏日志 */}
         <div className="rounded-2xl border border-dark-600 bg-dark-800/50 p-5 shadow-lg backdrop-blur">
           <h4 className="mb-3 font-semibold text-slate-100">📜 冒险日志</h4>
-          <div className="h-48 overflow-y-auto space-y-2">
+          <div ref={logRef} className="h-48 overflow-y-auto space-y-2">
             {gameLog.map((log) => (
               <div key={log.id} className={`text-sm ${getLogColor(log.type)}`}>
                 <span className="text-slate-600">[{new Date(log.timestamp).toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>{' '}
