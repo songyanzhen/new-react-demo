@@ -17,9 +17,9 @@ interface ExploreSceneProps {
   onBuyItem: (item: Item) => void
   onRest: (type: 'hp' | 'mp' | 'full', cost: number) => void
   onUpgrade: (item: Item, cost: number) => void
-  onEquip: (item: Item) => void
+  onEquip: (item: Item, index: number) => void
   onUnequip: (slot: 'weapon' | 'armor' | 'accessory') => void
-  onLearnSkill: (skillBook: Item) => void
+  onLearnSkill: (skillBook: Item, index: number) => void
   onSetScene: (scene: 'main' | 'shop' | 'rest' | 'blacksmith') => void
 }
 
@@ -168,13 +168,7 @@ export function ExploreScene({
     <Shop
       currentFloor={currentFloor}
       inventory={inventory}
-      onBuy={(item) => {
-        if (item.type === 'material') {
-          onLearnSkill(item)
-        } else {
-          onBuyItem(item)
-        }
-      }}
+      onBuy={onBuyItem}
       onClose={() => onSetScene('main')}
     />
   )
@@ -435,7 +429,7 @@ export function ExploreScene({
                     )}
                     {(entry.item.type === 'weapon' || entry.item.type === 'armor' || entry.item.type === 'accessory') && (
                       <button
-                        onClick={() => onEquip(entry.item)}
+                        onClick={() => onEquip(entry.item, index)}
                         className="text-xs text-blue-400 hover:text-blue-300"
                       >
                         装备
@@ -443,7 +437,7 @@ export function ExploreScene({
                     )}
                     {entry.item.type === 'material' && (
                       <button
-                        onClick={() => onLearnSkill(entry.item)}
+                        onClick={() => onLearnSkill(entry.item, index)}
                         className="text-xs text-purple-400 hover:text-purple-300"
                       >
                         学习

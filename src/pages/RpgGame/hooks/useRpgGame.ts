@@ -4,7 +4,7 @@ import type {
   Inventory, BaseStats, CheatMode, BattleLogEntry, Item 
 } from '../types'
 import { getRandomEnemy, getBossForFloor } from '../data/enemies'
-import { getCharacterSkills } from '../data/skills'
+import { getCharacterSkills, LEARNABLE_SKILLS } from '../data/skills'
 
 // ==================== 初始角色创建 ====================
 
@@ -1139,7 +1139,7 @@ export function useRpgGame() {
   }, [player, inventory, addLog, calculateStats])
 
   // 穿戴/卸下装备
-  const equipItem = useCallback((item: Item) => {
+  const equipItem = useCallback((item: Item, itemIndex: number) => {
     if (!player) return
     
     const slot = item.type === 'weapon' ? 'weapon' 
@@ -1151,14 +1151,20 @@ export function useRpgGame() {
     
     const currentEquip = player.equipment[slot]
     
-    // 如果该位置已有装备，先卸下
+    // 从背包移除要装备的物品
+    const newItems = [...inventory.items]
+    newItems[itemIndex].quantity--
+    if (newItems[itemIndex].quantity <= 0) {
+      newItems.splice(itemIndex, 1)
+    }
+    
+    // 如果该位置已有装备，卸下到背包
     if (currentEquip) {
       // 卸下当前装备到背包
-      setInventory(prev => ({
-        ...prev,
-        items: [...prev.items, { item: currentEquip, quantity: 1 }]
-      }))
+      newItems.push({ item: currentEquip, quantity: 1 })
     }
+    
+    setInventory({ ...inventory, items: newItems })
     
     // 穿上新装备
     setPlayer({
@@ -1168,7 +1174,7 @@ export function useRpgGame() {
     })
     
     addLog(`装备了 ${item.name}`, 'buff')
-  }, [player, addLog, calculateStats])
+  }, [player, inventory, addLog, calculateStats])
 
   // 卸下装备
   const unequipItem = useCallback((slot: 'weapon' | 'armor' | 'accessory') => {
@@ -1182,63 +1188,54 @@ export function useRpgGame() {
       return
     }
     
+    // 卸下装备到背包
+    setInventory({
+      ...inventory,
+      items: [...inventory.items, { item, quantity: 1 }]
+    })
+    
     setPlayer({
       ...player,
       equipment: { ...player.equipment, [slot]: null },
       currentStats: calculateStats({ ...player, equipment: { ...player.equipment, [slot]: null } })
     })
     
-    setInventory(prev => ({
-      ...prev,
-      items: [...prev.items, { item, quantity: 1 }]
-    }))
-    
     addLog(`卸下了 ${item.name}`, 'system')
   }, [player, inventory, addLog, calculateStats])
 
   // 学习技能
-  const learnSkill = useCallback((skillBook: Item) => {
+  const learnSkill = useCallback((skillBook: Item, itemIndex: number) => {
     if (!player) return
     
     // 从技能书ID解析技能
     const skillId = skillBook.id.replace('book_', '')
-    const skillMap: Record<string, { name: string; id: string }> = {
-      'fireball': { name: '火球术', id: 'fireball' },
-      'ice_shard': { name: '冰锥术', id: 'ice_shard' },
-      'lightning': { name: '连锁闪电', id: 'lightning' },
-      'heal': { name: '治疗术', id: 'heal' },
-      'whirlwind': { name: '旋风斩', id: 'whirlwind' },
-      'power_attack': { name: '强力打击', id: 'power_attack' },
-    }
-    
-    const skillInfo = skillMap[skillId]
-    if (!skillInfo) return
     
     // 检查是否已学习
-    if (player.skills.some(s => s.id === skillInfo.id)) {
-      addLog(`已经学会了 ${skillInfo.name}！`, 'system')
+    if (player.skills.some(s => s.id === skillId)) {
+      addLog(`已经学会了该技能！`, 'system')
       return
     }
     
-    // 从 skills.ts 导入技能
-    import('../data/skills').then(({ CLASS_SKILLS }) => {
-      let newSkill: Skill | null = null
-      
-      // 在所有职业技能中查找
-      Object.values(CLASS_SKILLS).forEach(skills => {
-        const found = skills.find(s => s.id === skillInfo.id)
-        if (found) newSkill = { ...found }
-      })
-      
-      if (newSkill) {
-        setPlayer({
-          ...player,
-          skills: [...player.skills, newSkill]
-        })
-        addLog(`学会了新技能：${skillInfo.name}！`, 'buff')
+    // 从可学习技能中查找
+    const newSkill = LEARNABLE_SKILLS.find(s => s.id === skillId)
+    
+    if (newSkill) {
+      // 消耗技能书
+      const newItems = [...inventory.items]
+      newItems[itemIndex].quantity--
+      if (newItems[itemIndex].quantity <= 0) {
+        newItems.splice(itemIndex, 1)
       }
-    })
-  }, [player, addLog])
+      setInventory({ ...inventory, items: newItems })
+      
+      // 学习技能
+      setPlayer({
+        ...player,
+        skills: [...player.skills, { ...newSkill }]
+      })
+      addLog(`学会了新技能：${newSkill.name}！`, 'buff')
+    }
+  }, [player, inventory, addLog])
 
   // 切换探索场景
   const setExploreView = useCallback((scene: 'main' | 'shop' | 'rest' | 'blacksmith') => {
