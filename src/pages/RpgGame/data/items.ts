@@ -63,7 +63,7 @@ export const CONSUMABLES: Item[] = [
     description: '完全恢复生命值和魔法值',
     icon: '🏺',
     effect: { hpRestore: 9999, mpRestore: 9999 },
-    value: 500,
+    value: 200,
   },
 ]
 
@@ -85,8 +85,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '战士进阶武器，攻击力+20',
     icon: '⚔️',
-    effect: { statBoost: { attack: 20, critRate: 5 } },
-    value: 300,
+    effect: { statBoost: { attack: 15, critRate: 3 } },
+    value: 250,
   },
   {
     id: 'berserker_axe',
@@ -94,8 +94,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '战士高级武器，攻击力+35，暴击率+10%',
     icon: '🪓',
-    effect: { statBoost: { attack: 35, critRate: 10, critDamage: 20 } },
-    value: 800,
+    effect: { statBoost: { attack: 22, critRate: 8, critDamage: 15 } },
+    value: 600,
   },
   // 法师武器
   {
@@ -113,8 +113,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '法师进阶武器，魔法攻击+30',
     icon: '🪄',
-    effect: { statBoost: { magicAttack: 30, intelligence: 5 } },
-    value: 350,
+    effect: { statBoost: { magicAttack: 22, intelligence: 3 } },
+    value: 280,
   },
   {
     id: 'archmage_staff',
@@ -122,8 +122,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '法师高级武器，魔法攻击+50，智力+10',
     icon: '🔮',
-    effect: { statBoost: { magicAttack: 50, intelligence: 10 } },
-    value: 1000,
+    effect: { statBoost: { magicAttack: 32, intelligence: 6 } },
+    value: 700,
   },
   // 盗贼武器
   {
@@ -141,8 +141,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '盗贼进阶武器，攻击力+18，敏捷+10',
     icon: '🗡️',
-    effect: { statBoost: { attack: 18, agility: 10, critRate: 10 } },
-    value: 350,
+    effect: { statBoost: { attack: 14, agility: 8, critRate: 8 } },
+    value: 280,
   },
   {
     id: 'assassin_dagger',
@@ -150,8 +150,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '盗贼高级武器，攻击力+25，暴击率+20%',
     icon: '🗡️',
-    effect: { statBoost: { attack: 25, critRate: 20, critDamage: 30 } },
-    value: 900,
+    effect: { statBoost: { attack: 20, critRate: 15, critDamage: 25 } },
+    value: 650,
   },
   // 通用武器
   {
@@ -160,8 +160,8 @@ export const WEAPONS: Item[] = [
     type: 'weapon',
     description: '传说中的武器，攻击力+50',
     icon: '🗡️',
-    effect: { statBoost: { attack: 50, strength: 10, critRate: 15 } },
-    value: 2000,
+    effect: { statBoost: { attack: 35, strength: 8, critRate: 12 } },
+    value: 1200,
   },
 ]
 
@@ -182,8 +182,8 @@ export const ARMORS: Item[] = [
     type: 'armor',
     description: '进阶护甲，防御+20',
     icon: '👕',
-    effect: { statBoost: { defense: 20, magicDefense: 10 } },
-    value: 250,
+    effect: { statBoost: { defense: 16, magicDefense: 8 } },
+    value: 220,
   },
   {
     id: 'plate_armor',
@@ -191,8 +191,8 @@ export const ARMORS: Item[] = [
     type: 'armor',
     description: '重型护甲，防御+35，体质+10',
     icon: '🛡️',
-    effect: { statBoost: { defense: 35, vitality: 10 } },
-    value: 600,
+    effect: { statBoost: { defense: 25, vitality: 8 } },
+    value: 450,
   },
   {
     id: 'mage_robe',
@@ -200,8 +200,8 @@ export const ARMORS: Item[] = [
     type: 'armor',
     description: '法师护甲，魔法防御+25，智力+10',
     icon: '👘',
-    effect: { statBoost: { magicDefense: 25, intelligence: 10, maxMp: 50 } },
-    value: 400,
+    effect: { statBoost: { magicDefense: 20, intelligence: 8, maxMp: 30 } },
+    value: 320,
   },
   {
     id: 'shadow_cloak',
@@ -209,8 +209,8 @@ export const ARMORS: Item[] = [
     type: 'armor',
     description: '盗贼护甲，防御+15，闪避+15',
     icon: '🧥',
-    effect: { statBoost: { defense: 15, evasion: 15, agility: 10 } },
-    value: 500,
+    effect: { statBoost: { defense: 14, evasion: 12, agility: 8 } },
+    value: 380,
   },
   {
     id: 'dragon_scale',
@@ -218,8 +218,8 @@ export const ARMORS: Item[] = [
     type: 'armor',
     description: '传说护甲，防御+50，全抗性+20',
     icon: '🐉',
-    effect: { statBoost: { defense: 50, magicDefense: 30, fireResist: 20, iceResist: 20 } },
-    value: 2500,
+    effect: { statBoost: { defense: 35, magicDefense: 25, fireResist: 15, iceResist: 15 } },
+    value: 1500,
   },
 ]
 
