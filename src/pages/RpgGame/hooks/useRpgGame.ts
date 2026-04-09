@@ -5,6 +5,18 @@ import type {
 } from '../types'
 import { getRandomEnemy, getBossForFloor } from '../data/enemies'
 import { getCharacterSkills, LEARNABLE_SKILLS } from '../data/skills'
+import { 
+  getRandomExploreEvent, 
+  getTreasureEvent, 
+  getShrineEvent, 
+  getMerchantEvent, 
+  getMysteryEvent, 
+  getTrapEvent, 
+  getRestEvent,
+  getEliteEvent,
+  getHiddenBossEvent,
+  type EventResult
+} from '../data/events'
 
 // ==================== 初始角色创建 ====================
 
@@ -91,8 +103,11 @@ export function useRpgGame() {
   const [inventory, setInventory] = useState<Inventory>({ items: [], gold: 100, maxSlots: 20 })
   const [gameLog, setGameLog] = useState<BattleLogEntry[]>([{ id: '1', text: '欢迎来到 RPG 世界！', type: 'system', timestamp: Date.now() }])
   const [currentFloor, setCurrentFloor] = useState(1)
-  const [floorExploreCount, setFloorExploreCount] = useState(0)  // 当前楼层探索次数（最多3次）
+  const [floorExploreCount, setFloorExploreCount] = useState(0)  // 当前楼层探索次数（最多5次）
   const [battleAnimation, setBattleAnimation] = useState<string | null>(null)
+  
+  // 当前探索事件
+  const [currentEvent, setCurrentEvent] = useState<EventResult | null>(null)
   
   // 探索场景状态: 'main' | 'shop' | 'rest' | 'blacksmith'
   const [exploreScene, setExploreScene] = useState<'main' | 'shop' | 'rest' | 'blacksmith'>('main')
@@ -234,12 +249,12 @@ export function useRpgGame() {
     return stats
   }, [])
 
-  // 遭遇敌人
+  // 探索事件处理
   const encounterEnemy = useCallback(() => {
     if (!player) return
     
-    // 检查探索次数（最多3次）
-    if (floorExploreCount >= 3) {
+    // 检查探索次数（最多5次）
+    if (floorExploreCount >= 5) {
       addLog('本层已经探索完毕，请前往下一层！', 'system')
       return
     }
@@ -269,25 +284,100 @@ export function useRpgGame() {
       return
     }
     
-    // 普通敌人
-    const enemyCount = Math.floor(Math.random() * 3) + 1
-    const enemies: Enemy[] = []
+    // 获取随机事件类型
+    const eventType = getRandomExploreEvent(currentFloor, floorExploreCount)
     
-    for (let i = 0; i < enemyCount; i++) {
-      enemies.push(getRandomEnemy(player.level, currentFloor))
-    }
+    switch (eventType) {
+      case 'treasure': {
+        const event = getTreasureEvent(currentFloor)
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'shrine': {
+        const event = getShrineEvent()
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'merchant': {
+        const event = getMerchantEvent(currentFloor)
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'mystery': {
+        const event = getMysteryEvent(currentFloor)
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'rest': {
+        const event = getRestEvent()
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'trap': {
+        const event = getTrapEvent(currentFloor)
+        setCurrentEvent(event)
+        setGamePhase('event')
+        // 立即应用陷阱伤害
+        if (event.penalties) {
+          if (event.penalties.hp) {
+            setPlayer({ ...player, hp: Math.max(1, player.hp - event.penalties.hp) })
+            addLog(`受到 ${event.penalties.hp} 点陷阱伤害！`, 'damage')
+          }
+          if (event.penalties.gold) {
+            setInventory(prev => ({ ...prev, gold: Math.max(0, prev.gold - event.penalties!.gold!) }))
+            addLog(`丢失了 ${event.penalties.gold} 金币！`, 'damage')
+          }
+        }
+        break
+      }
+      case 'elite': {
+        const event = getEliteEvent(currentFloor)
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'hidden_boss': {
+        const event = getHiddenBossEvent(currentFloor)
+        setCurrentEvent(event)
+        setGamePhase('event')
+        addLog(event.description, 'system')
+        break
+      }
+      case 'combat':
+      default: {
+        // 普通战斗
+        const enemyCount = Math.floor(Math.random() * 3) + 1
+        const enemies: Enemy[] = []
+        
+        for (let i = 0; i < enemyCount; i++) {
+          enemies.push(getRandomEnemy(player.level, currentFloor))
+        }
 
-    setBattleState({
-      player: updatedPlayer,
-      enemies,
-      turn: 1,
-      currentTurn: 'player',
-      selectedEnemyIndex: 0,
-      battleLog: [],
-      isAnimating: false,
-    })
-    setGamePhase('battle')
-    addLog(`遭遇了 ${enemies.map(e => e.name).join('、')}!`, 'system')
+        setBattleState({
+          player: updatedPlayer,
+          enemies,
+          turn: 1,
+          currentTurn: 'player',
+          selectedEnemyIndex: 0,
+          battleLog: [],
+          isAnimating: false,
+        })
+        setGamePhase('battle')
+        addLog(`遭遇了 ${enemies.map(e => e.name).join('、')}!`, 'system')
+        break
+      }
+    }
   }, [player, currentFloor, floorExploreCount, addLog, calculateStats])
 
   // 玩家行动
@@ -1242,6 +1332,341 @@ export function useRpgGame() {
     setExploreScene(scene)
   }, [])
 
+  // 处理事件选项
+  const handleEventOption = useCallback((action: string, value?: number) => {
+    if (!player || !currentEvent) return
+    
+    switch (action) {
+      case 'heal_hp': {
+        const healAmount = Math.floor(player.maxHp * (value || 50) / 100)
+        setPlayer({ ...player, hp: Math.min(player.hp + healAmount, player.maxHp) })
+        addLog(`治愈祭坛恢复了 ${healAmount} 点生命值！`, 'heal')
+        break
+      }
+      case 'exp': {
+        const cost = value || 50
+        if (inventory.gold >= cost) {
+          setInventory(prev => ({ ...prev, gold: prev.gold - cost }))
+          const expGain = 30 + currentFloor * 5
+          addLog(`献祭获得 ${expGain} 经验值！`, 'buff')
+          // 直接加经验
+          const newPlayer = { ...player, exp: player.exp + expGain }
+          if (newPlayer.exp >= newPlayer.maxExp) {
+            // 升级处理简化版
+            newPlayer.exp -= newPlayer.maxExp
+            newPlayer.level += 1
+            newPlayer.maxExp = Math.floor(newPlayer.maxExp * 1.3)
+            addLog(`升级了！达到 ${newPlayer.level} 级！`, 'system')
+          }
+          setPlayer(newPlayer)
+        }
+        break
+      }
+      case 'trade_hp_gold': {
+        const hpCost = value || 30
+        const goldGain = 100
+        setPlayer({ ...player, hp: Math.max(1, player.hp - hpCost) })
+        setInventory(prev => ({ ...prev, gold: prev.gold + goldGain }))
+        addLog(`献祭 ${hpCost} 生命值获得 ${goldGain} 金币！`, 'system')
+        break
+      }
+      case 'buy': {
+        const cost = value || 0
+        if (inventory.gold >= cost && currentEvent.rewards?.item) {
+          setInventory(prev => ({
+            ...prev,
+            gold: prev.gold - cost,
+            items: [...prev.items, { item: currentEvent.rewards!.item!, quantity: 1 }]
+          }))
+          addLog(`购买了 ${currentEvent.rewards.item.name}！`, 'system')
+        }
+        break
+      }
+      case 'portal': {
+        // 传送门：随机传送，可能传送到下一层或获得奖励
+        const roll = Math.random()
+        if (roll < 0.3) {
+          // 30% 传送到下一层
+          addLog('传送门将你送到了下一层！', 'buff')
+          setCurrentFloor(prev => prev + 1)
+          setFloorExploreCount(0)
+        } else if (roll < 0.6) {
+          // 30% 获得奖励
+          const goldReward = 50 + currentFloor * 20
+          setInventory(prev => ({ ...prev, gold: prev.gold + goldReward }))
+          addLog(`传送门中掉出了 ${goldReward} 金币！`, 'buff')
+        } else {
+          // 40% 遭遇战斗
+          addLog('传送门将你送到了危险的地方！', 'damage')
+          const enemy = getRandomEnemy(player.level, currentFloor + 1)
+          setBattleState({
+            player,
+            enemies: [{ ...enemy, hp: enemy.hp + 20, maxHp: enemy.maxHp + 20 }],
+            turn: 1,
+            currentTurn: 'player',
+            selectedEnemyIndex: 0,
+            battleLog: [],
+            isAnimating: false,
+          })
+          setGamePhase('battle')
+        }
+        break
+      }
+      case 'statue_touch': {
+        const roll = Math.random()
+        if (roll < 0.4) {
+          setPlayer({ ...player, hp: Math.min(player.hp + 30, player.maxHp) })
+          addLog('雕像赐予了你治愈之力！', 'heal')
+        } else if (roll < 0.7) {
+          addLog('雕像没有反应...', 'system')
+        } else {
+          setPlayer({ ...player, hp: Math.max(1, player.hp - 20) })
+          addLog('雕像诅咒了你！', 'damage')
+        }
+        break
+      }
+      case 'statue_gold': {
+        const goldCost = value || 10
+        if (inventory.gold >= goldCost) {
+          setInventory(prev => ({ ...prev, gold: prev.gold - goldCost }))
+          setPlayer({ ...player, mp: Math.min(player.mp + 40, player.maxMp) })
+          addLog('雕像赐予了你魔力！', 'buff')
+        }
+        break
+      }
+      case 'scroll_read': {
+        const roll = Math.random()
+        if (roll < 0.5) {
+          const expGain = 25
+          setPlayer({ ...player, exp: player.exp + expGain })
+          addLog(`卷轴记载着古老的知识，获得 ${expGain} 经验！`, 'buff')
+        } else {
+          addLog('卷轴上写着你已经知道的知识...', 'system')
+        }
+        break
+      }
+      case 'scroll_burn': {
+        addLog('你烧毁了卷轴，获得了一丝温暖...', 'system')
+        break
+      }
+      case 'scroll_keep': {
+        addLog('你收起了卷轴，也许以后有用...', 'system')
+        break
+      }
+      case 'wish': {
+        const goldCost = value || 10
+        if (inventory.gold >= goldCost) {
+          setInventory(prev => ({ ...prev, gold: prev.gold - goldCost }))
+          const roll = Math.random()
+          if (roll < 0.4) {
+            setInventory(prev => ({ ...prev, gold: prev.gold + 30 }))
+            addLog('井中涌出了金币！', 'buff')
+          } else if (roll < 0.7) {
+            setPlayer({ ...player, hp: Math.min(player.hp + 25, player.maxHp) })
+            addLog('井水治愈了你的伤口！', 'heal')
+          } else {
+            addLog('井水毫无反应...', 'system')
+          }
+        }
+        break
+      }
+      case 'wish_big': {
+        const goldCost = value || 50
+        if (inventory.gold >= goldCost) {
+          setInventory(prev => ({ ...prev, gold: prev.gold - goldCost }))
+          const roll = Math.random()
+          if (roll < 0.3) {
+            setInventory(prev => ({ ...prev, gold: prev.gold + 150 }))
+            addLog('井中涌出了大量金币！', 'buff')
+          } else if (roll < 0.6) {
+            setPlayer({ ...player, hp: player.maxHp, mp: player.maxMp })
+            addLog('井水完全治愈了你！', 'heal')
+          } else {
+            setPlayer({ ...player, hp: Math.max(1, player.hp - 30) })
+            addLog('井水变成了酸液！', 'damage')
+          }
+        }
+        break
+      }
+      case 'rest': {
+        const restorePercent = value || 20
+        const hpRestore = Math.floor(player.maxHp * restorePercent / 100)
+        const mpRestore = Math.floor(player.maxMp * restorePercent / 100)
+        setPlayer({ 
+          ...player, 
+          hp: Math.min(player.hp + hpRestore, player.maxHp),
+          mp: Math.min(player.mp + mpRestore, player.maxMp)
+        })
+        addLog(`休息恢复了 ${hpRestore} HP 和 ${mpRestore} MP！`, 'heal')
+        break
+      }
+      case 'meditate': {
+        const mpRestore = Math.floor(player.maxMp * (value || 40) / 100)
+        setPlayer({ ...player, mp: Math.min(player.mp + mpRestore, player.maxMp) })
+        addLog(`冥想恢复了 ${mpRestore} MP！`, 'buff')
+        break
+      }
+      case 'heal': {
+        const hpRestore = Math.floor(player.maxHp * (value || 40) / 100)
+        setPlayer({ ...player, hp: Math.min(player.hp + hpRestore, player.maxHp) })
+        addLog(`包扎伤口恢复了 ${hpRestore} HP！`, 'heal')
+        break
+      }
+      case 'fight_elite': {
+        // 触发精英战斗
+        if (currentEvent) {
+          const enemy = getRandomEnemy(player.level, currentFloor)
+          const eliteEnemy = { 
+            ...enemy, 
+            name: currentEvent.title.replace('遭遇 ', '').replace('！', ''),
+            hp: Math.floor(enemy.hp * 1.5),
+            maxHp: Math.floor(enemy.maxHp * 1.5),
+            stats: { ...enemy.stats, attack: Math.floor(enemy.stats.attack * 1.3) }
+          }
+          setBattleState({
+            player,
+            enemies: [eliteEnemy],
+            turn: 1,
+            currentTurn: 'player',
+            selectedEnemyIndex: 0,
+            battleLog: [],
+            isAnimating: false,
+          })
+          setGamePhase('battle')
+          addLog(`精英战开始！`, 'system')
+        }
+        break
+      }
+      case 'flee_elite': {
+        // 尝试逃跑
+        if (Math.random() < 0.6) {
+          addLog('成功逃离了精英怪！', 'system')
+        } else {
+          addLog('逃跑失败！被迫战斗！', 'damage')
+          if (currentEvent) {
+            const enemy = getRandomEnemy(player.level, currentFloor)
+            const eliteEnemy = { 
+              ...enemy, 
+              name: currentEvent.title.replace('遭遇 ', '').replace('！', ''),
+              hp: Math.floor(enemy.hp * 1.5),
+              maxHp: Math.floor(enemy.maxHp * 1.5),
+            }
+            setBattleState({
+              player,
+              enemies: [eliteEnemy],
+              turn: 1,
+              currentTurn: 'player',
+              selectedEnemyIndex: 0,
+              battleLog: [],
+              isAnimating: false,
+            })
+            setGamePhase('battle')
+          }
+        }
+        break
+      }
+      case 'fight_hidden_boss': {
+        // 触发隐藏Boss战斗
+        if (currentEvent) {
+          const bossLevel = currentFloor + 2
+          const enemy = getRandomEnemy(player.level, bossLevel)
+          const hiddenBoss = { 
+            ...enemy, 
+            name: currentEvent.title.replace('隐藏Boss: ', '').replace('！', ''),
+            hp: Math.floor(enemy.hp * 2),
+            maxHp: Math.floor(enemy.maxHp * 2),
+            stats: { 
+              ...enemy.stats, 
+              attack: Math.floor(enemy.stats.attack * 1.5),
+              defense: Math.floor(enemy.stats.defense * 1.3)
+            },
+            expReward: Math.floor(enemy.expReward * 2.5),
+            goldReward: Math.floor(enemy.goldReward * 3)
+          }
+          setBattleState({
+            player,
+            enemies: [hiddenBoss],
+            turn: 1,
+            currentTurn: 'player',
+            selectedEnemyIndex: 0,
+            battleLog: [],
+            isAnimating: false,
+          })
+          setGamePhase('battle')
+          addLog(`隐藏Boss战开始！`, 'system')
+        }
+        break
+      }
+      case 'flee_hidden_boss': {
+        // 60% 逃跑成功
+        if (Math.random() < 0.6) {
+          addLog('成功逃离了隐藏Boss！', 'system')
+        } else {
+          addLog('逃跑失败！被迫战斗！', 'damage')
+          if (currentEvent) {
+            const bossLevel = currentFloor + 2
+            const enemy = getRandomEnemy(player.level, bossLevel)
+            const hiddenBoss = { 
+              ...enemy, 
+              name: currentEvent.title.replace('隐藏Boss: ', '').replace('！', ''),
+              hp: Math.floor(enemy.hp * 2),
+              maxHp: Math.floor(enemy.maxHp * 2),
+            }
+            setBattleState({
+              player,
+              enemies: [hiddenBoss],
+              turn: 1,
+              currentTurn: 'player',
+              selectedEnemyIndex: 0,
+              battleLog: [],
+              isAnimating: false,
+            })
+            setGamePhase('battle')
+          }
+        }
+        break
+      }
+      case 'leave':
+      default: {
+        // 离开事件
+        addLog('你选择了离开...', 'system')
+        break
+      }
+    }
+    
+    // 关闭事件
+    setCurrentEvent(null)
+    setGamePhase('explore')
+  }, [player, currentEvent, inventory, currentFloor, addLog])
+
+  // 收集宝藏奖励
+  const collectTreasure = useCallback(() => {
+    if (!currentEvent?.rewards) return
+    
+    if (currentEvent.rewards.gold) {
+      setInventory(prev => ({ ...prev, gold: prev.gold + currentEvent.rewards!.gold! }))
+      addLog(`获得了 ${currentEvent.rewards.gold} 金币！`, 'buff')
+    }
+    
+    if (currentEvent.rewards.item) {
+      setInventory(prev => ({
+        ...prev,
+        items: [...prev.items, { item: currentEvent.rewards!.item!, quantity: 1 }]
+      }))
+      addLog(`获得了 ${currentEvent.rewards.item.name}！`, 'buff')
+    }
+    
+    if (currentEvent.rewards.exp) {
+      if (player) {
+        setPlayer({ ...player, exp: player.exp + currentEvent.rewards.exp })
+        addLog(`获得了 ${currentEvent.rewards.exp} 经验值！`, 'buff')
+      }
+    }
+    
+    setCurrentEvent(null)
+    setGamePhase('explore')
+  }, [currentEvent, player, addLog])
+
   return {
     gamePhase,
     player,
@@ -1268,6 +1693,9 @@ export function useRpgGame() {
     setExploreView,
     handleTitleClick,
     toggleCheatOption,
+    currentEvent,
+    handleEventOption,
+    collectTreasure,
   }
 }
 

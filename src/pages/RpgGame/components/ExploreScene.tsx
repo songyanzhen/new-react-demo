@@ -95,21 +95,21 @@ export function ExploreScene({
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={onEncounter}
-          disabled={floorExploreCount >= 3}
+          disabled={floorExploreCount >= 5}
           className={`group relative overflow-hidden rounded-2xl border p-6 text-center transition ${
-            floorExploreCount >= 3
+            floorExploreCount >= 5
               ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed opacity-60'
               : 'border-red-500/50 bg-red-500/10 hover:bg-red-500/20'
           }`}
         >
-          <div className={`mb-2 text-4xl transition ${floorExploreCount >= 3 ? '' : 'group-hover:scale-110'}`}>
-            {floorExploreCount >= 3 ? '✅' : '⚔️'}
+          <div className={`mb-2 text-4xl transition ${floorExploreCount >= 5 ? '' : 'group-hover:scale-110'}`}>
+            {floorExploreCount >= 5 ? '✅' : '⚔️'}
           </div>
-          <div className={`font-bold ${floorExploreCount >= 3 ? 'text-slate-400' : 'text-red-400'}`}>
-            {floorExploreCount >= 3 ? '已探索' : '探索'}
+          <div className={`font-bold ${floorExploreCount >= 5 ? 'text-slate-400' : 'text-red-400'}`}>
+            {floorExploreCount >= 5 ? '已探索' : '探索'}
           </div>
-          <div className={`text-sm ${floorExploreCount >= 3 ? 'text-slate-500' : 'text-red-400/70'}`}>
-            {floorExploreCount >= 3 
+          <div className={`text-sm ${floorExploreCount >= 5 ? 'text-slate-500' : 'text-red-400/70'}`}>
+            {floorExploreCount >= 5 
               ? '本层已清理' 
               : `寻找敌人 (${floorExploreCount}/3)`}
           </div>

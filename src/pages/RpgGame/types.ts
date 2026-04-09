@@ -1,7 +1,7 @@
 // RPG 游戏类型定义
 
 // 游戏状态
-export type GamePhase = 'explore' | 'battle' | 'dialog' | 'menu' | 'gameOver'
+export type GamePhase = 'explore' | 'battle' | 'dialog' | 'menu' | 'gameOver' | 'event'
 
 // 角色职业
 export type CharacterClass = 'warrior' | 'mage' | 'rogue' | 'paladin' | 'ranger'

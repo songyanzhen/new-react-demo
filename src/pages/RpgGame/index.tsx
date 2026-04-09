@@ -4,6 +4,7 @@ import { CharacterCreate } from './components/CharacterCreate'
 import { BattleScene } from './components/BattleScene'
 import { ExploreScene } from './components/ExploreScene'
 import { CheatPanel } from './components/CheatPanel'
+import { EventScene } from './components/EventScene'
 
 
 export { RpgGame }
@@ -35,6 +36,9 @@ function RpgGame() {
     setExploreView,
     handleTitleClick,
     toggleCheatOption,
+    currentEvent,
+    handleEventOption,
+    collectTreasure,
   } = useRpgGame()
 
   // 键盘监听（作弊模式快捷键）
@@ -99,6 +103,12 @@ function RpgGame() {
               onSelectEnemy={selectEnemy}
               animation={battleAnimation}
             />
+          ) : gamePhase === 'event' && currentEvent ? (
+            <EventScene
+              event={currentEvent}
+              onOptionSelect={handleEventOption}
+              onCollectTreasure={collectTreasure}
+            />
           ) : gamePhase === 'gameOver' ? (
             <div className="rounded-2xl border border-red-500/50 bg-red-500/10 p-8 text-center">
               <div className="mb-4 text-6xl">💀</div>
@@ -141,7 +151,7 @@ function RpgGame() {
             <div>• 属性：力量/智力/敏捷/体质/灵巧/幸运影响不同能力</div>
             <div>• 技能：攻击、增益、减益、治疗、群攻等多种类型</div>
             <div>• 状态：中毒/灼烧/冰冻/眩晕/流血/再生等</div>
-            <div>• 探索：每层最多探索3次，至少探索1次后可前往下一层</div>
+            <div>• 探索：每层最多探索5次，包含战斗、事件、宝藏等随机遭遇</div>
             <div>• Boss：第5/10/15/20层有强力Boss，击败后可继续深入</div>
             <div>• 彩蛋：连续点击标题5次激活作弊模式</div>
           </div>
