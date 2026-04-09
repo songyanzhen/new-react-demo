@@ -111,7 +111,7 @@ export function ExploreScene({
           <div className={`text-sm ${floorExploreCount >= 5 ? 'text-slate-500' : 'text-red-400/70'}`}>
             {floorExploreCount >= 5 
               ? '本层已清理' 
-              : `寻找敌人 (${floorExploreCount}/3)`}
+              : `寻找敌人 (${floorExploreCount}/5)`}
           </div>
         </button>
 
