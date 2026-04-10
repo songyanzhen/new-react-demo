@@ -39,6 +39,11 @@ function RpgGame() {
     currentEvent,
     handleEventOption,
     collectTreasure,
+    cheatGetArtifact,
+    cheatGetHiddenSkill,
+    cheatGetStatBoost,
+    cheatLevelUp,
+    cheatAddGold,
   } = useRpgGame()
 
   // 键盘监听（作弊模式快捷键）
@@ -89,6 +94,11 @@ function RpgGame() {
           <CheatPanel 
             cheatMode={cheatMode} 
             onToggle={toggleCheatOption}
+            onGetArtifact={cheatGetArtifact}
+            onGetHiddenSkill={cheatGetHiddenSkill}
+            onGetStatBoost={cheatGetStatBoost}
+            onLevelUp={cheatLevelUp}
+            onAddGold={cheatAddGold}
           />
         )}
 

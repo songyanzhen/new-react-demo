@@ -17,6 +17,11 @@ import {
   getHiddenBossEvent,
   type EventResult
 } from '../data/events'
+import { 
+  getRandomArtifact, 
+  getRandomHiddenSkill, 
+  getRandomStatBoost
+} from '../data/artifacts'
 
 // ==================== 初始角色创建 ====================
 
@@ -170,16 +175,6 @@ export function useRpgGame() {
     setCheatMode(prev => ({ ...prev, [option]: !prev[option] }))
   }, [cheatMode.enabled])
 
-  // 开始新游戏
-  const startGame = useCallback((name: string, characterClass: CharacterClass) => {
-    const newPlayer = createInitialCharacter(name, characterClass)
-    setPlayer(newPlayer)
-    setInventory({ items: [], gold: 100, maxSlots: 20 })
-    setGamePhase('explore')
-    setCurrentFloor(1)
-    setGameLog([{ id: '1', text: `欢迎，${name}！你选择了${getClassName(characterClass)}职业。`, type: 'system', timestamp: Date.now() }])
-  }, [])
-
   // 计算实际属性（包含装备加成和状态效果）
   const calculateStats = useCallback((character: Character): BaseStats => {
     const base = character.baseStats
@@ -247,6 +242,114 @@ export function useRpgGame() {
     stats.magicDefense = Math.max(0, stats.magicDefense)
     
     return stats
+  }, [])
+
+  // 作弊：获取神器
+  const cheatGetArtifact = useCallback((rarity: 'legendary' | 'mythic' | 'divine') => {
+    if (!player) return
+    const artifact = getRandomArtifact(rarity)
+    if (artifact) {
+      setInventory(prev => ({
+        ...prev,
+        items: [...prev.items, { item: artifact, quantity: 1 }]
+      }))
+      addLog(`[作弊] 获得了${rarity === 'legendary' ? '传说' : rarity === 'mythic' ? '神话' : '神级'}神器：${artifact.name}！`, 'buff')
+    }
+  }, [player, addLog])
+
+  // 作弊：获取隐藏技能
+  const cheatGetHiddenSkill = useCallback(() => {
+    if (!player) return
+    const hiddenSkill = getRandomHiddenSkill()
+    // 创建技能对象
+    const newSkill: Skill = {
+      id: hiddenSkill.id,
+      name: hiddenSkill.name,
+      description: hiddenSkill.description,
+      icon: hiddenSkill.icon,
+      mpCost: 50,
+      cooldown: 5,
+      currentCooldown: 0,
+      damage: 5.0,
+      damageType: 'true',
+      target: 'single',
+      type: 'special',
+      animation: 'ultimate',
+    }
+    setPlayer({
+      ...player,
+      skills: [...player.skills, newSkill]
+    })
+    addLog(`[作弊] 领悟了隐藏技能：${hiddenSkill.name}！`, 'buff')
+  }, [player, addLog])
+
+  // 作弊：属性提升
+  const cheatGetStatBoost = useCallback(() => {
+    if (!player) return
+    const boost = getRandomStatBoost()
+    // 永久提升基础属性
+    const newBaseStats = { ...player.baseStats }
+    Object.entries(boost.statBoost).forEach(([key, value]) => {
+      if (value && key in newBaseStats) {
+        (newBaseStats as any)[key] += value
+      }
+    })
+    setPlayer({
+      ...player,
+      baseStats: newBaseStats,
+      currentStats: calculateStats({ ...player, baseStats: newBaseStats })
+    })
+    addLog(`[作弊] 获得了${boost.name}！属性永久提升！`, 'buff')
+  }, [player, addLog, calculateStats])
+
+  // 作弊：升级
+  const cheatLevelUp = useCallback(() => {
+    if (!player) return
+    const newPlayer = { ...player }
+    newPlayer.exp = 0
+    newPlayer.level += 1
+    newPlayer.maxExp = Math.floor(newPlayer.maxExp * 1.3)
+    // 升级奖励
+    newPlayer.baseStats.strength += 2
+    newPlayer.baseStats.intelligence += 2
+    newPlayer.baseStats.agility += 2
+    newPlayer.baseStats.vitality += 2
+    newPlayer.baseStats.dexterity += 1
+    newPlayer.baseStats.luck += 1
+    // 重新计算属性
+    const newMaxHp = 80 + newPlayer.baseStats.vitality * 10
+    const newMaxMp = 40 + newPlayer.baseStats.intelligence * 5
+    newPlayer.maxHp = newMaxHp
+    newPlayer.hp = newMaxHp
+    newPlayer.maxMp = newMaxMp
+    newPlayer.mp = newMaxMp
+    newPlayer.currentStats = calculateStats(newPlayer)
+    setPlayer(newPlayer)
+    addLog(`[作弊] 升级了！达到 ${newPlayer.level} 级！`, 'system')
+  }, [player, addLog, calculateStats])
+
+  // 作弊：添加金币
+  const cheatAddGold = useCallback((amount: number) => {
+    if (amount === -1) {
+      // 特殊标记：恢复满血满蓝
+      if (player) {
+        setPlayer({ ...player, hp: player.maxHp, mp: player.maxMp })
+        addLog('[作弊] 恢复满血满蓝！', 'heal')
+      }
+    } else {
+      setInventory(prev => ({ ...prev, gold: prev.gold + amount }))
+      addLog(`[作弊] 获得了 ${amount} 金币！`, 'buff')
+    }
+  }, [player, addLog])
+
+  // 开始新游戏
+  const startGame = useCallback((name: string, characterClass: CharacterClass) => {
+    const newPlayer = createInitialCharacter(name, characterClass)
+    setPlayer(newPlayer)
+    setInventory({ items: [], gold: 100, maxSlots: 20 })
+    setGamePhase('explore')
+    setCurrentFloor(1)
+    setGameLog([{ id: '1', text: `欢迎，${name}！你选择了${getClassName(characterClass)}职业。`, type: 'system', timestamp: Date.now() }])
   }, [])
 
   // 探索事件处理
@@ -1696,6 +1799,11 @@ export function useRpgGame() {
     currentEvent,
     handleEventOption,
     collectTreasure,
+    cheatGetArtifact,
+    cheatGetHiddenSkill,
+    cheatGetStatBoost,
+    cheatLevelUp,
+    cheatAddGold,
   }
 }
 
