@@ -4,6 +4,7 @@ import viteLogo from './assets/vite.svg'
 import { PuzzleTest } from './pages/PuzzleTest/index'
 import { AirplaneWar } from './pages/AirplaneWar/index'
 import { RpgGame } from './pages/RpgGame/index'
+import { Playground } from './pages/Playground/index'
 
 function App() {
   return (
@@ -47,6 +48,12 @@ function App() {
               >
                 RPG
               </Link>
+              <Link
+                to="/playground"
+                className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-sm font-medium text-blue-300 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-500/20 hover:shadow"
+              >
+                实验室
+              </Link>
             </div>
           </div>
         </nav>
@@ -56,6 +63,7 @@ function App() {
           <Route path="/puzzleTest" element={<PuzzleTest />} />
           <Route path="/airplane" element={<AirplaneWar />} />
           <Route path="/rpg" element={<RpgGame />} />
+          <Route path="/playground" element={<Playground />} />
         </Routes>
       </div>
     </div>
@@ -192,6 +200,44 @@ function Home() {
               <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-dark-600 bg-dark-900 shadow-sm sm:flex">
                 <svg className="h-5 w-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 2L2 7l8 5 8-5-8-5zM2 17l8 5 8-5M2 12l8 5 8-5" />
+                </svg>
+              </div>
+              <div className="mt-0.5 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-slate-300">
+                →
+              </div>
+            </div>
+          </div>
+        </Link>
+        
+        <Link
+          className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-dark-800/40 p-5 text-left shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-md"
+          to="/playground"
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 blur-2xl"
+          />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold tracking-tight text-slate-100">
+                代码实验室
+              </div>
+              <div className="mt-1 text-sm text-slate-400">
+                自由测试 React、JavaScript、CSS 代码的沙盒环境。
+              </div>
+              <div className="mt-4 inline-flex items-center gap-2 text-xs text-slate-500">
+                <span className="rounded-full bg-blue-500/10 px-2 py-1 text-blue-400">
+                  /playground
+                </span>
+                <span className="rounded-full bg-blue-500/10 px-2 py-1 text-blue-400">
+                  实验
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden h-10 w-10 items-center justify-center rounded-xl border border-blue-500/30 bg-dark-900 shadow-sm sm:flex">
+                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
               </div>
               <div className="mt-0.5 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-slate-300">
