@@ -222,12 +222,14 @@ const DEFAULT_HTML_CODE = `<!DOCTYPE html>
 function HtmlPlayground() {
   const [htmlCode, setHtmlCode] = useState(DEFAULT_HTML_CODE)
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code')
+  const [iframeKey, setIframeKey] = useState(0)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // 更新 iframe 内容
   const updatePreview = useCallback(() => {
     if (iframeRef.current) {
-      const doc = iframeRef.current.contentDocument
+      const iframe = iframeRef.current
+      const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (doc) {
         doc.open()
         doc.write(htmlCode)
@@ -236,11 +238,48 @@ function HtmlPlayground() {
     }
   }, [htmlCode])
 
-  // 代码变化时自动更新预览
+  // 组件挂载时初始化
   useEffect(() => {
-    const timer = setTimeout(updatePreview, 300)
+    const timer = setTimeout(() => {
+      if (iframeRef.current) {
+        const iframe = iframeRef.current
+        const doc = iframe.contentDocument || iframe.contentWindow?.document
+        if (doc) {
+          doc.open()
+          doc.write(htmlCode)
+          doc.close()
+        }
+      }
+    }, 100)
     return () => clearTimeout(timer)
-  }, [htmlCode, updatePreview])
+  }, [iframeKey])
+
+  // 代码变化时更新预览（防抖）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (iframeRef.current) {
+        const iframe = iframeRef.current
+        const doc = iframe.contentDocument || iframe.contentWindow?.document
+        if (doc) {
+          doc.open()
+          doc.write(htmlCode)
+          doc.close()
+        }
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [htmlCode])
+
+  // iframe 加载完成后更新内容
+  const handleIframeLoad = () => {
+    updatePreview()
+  }
+
+  // 强制刷新 iframe
+  const forceRefresh = () => {
+    setIframeKey(k => k + 1)
+    setTimeout(updatePreview, 100)
+  }
 
   // 格式化代码（简单缩进）
   const formatCode = () => {
@@ -338,7 +377,7 @@ function HtmlPlayground() {
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-medium text-slate-300">实时预览</span>
             <button
-              onClick={updatePreview}
+              onClick={forceRefresh}
               className="rounded bg-green-500/10 px-2 py-1 text-xs text-green-400 transition hover:bg-green-500/20"
             >
               ⟳ 刷新
@@ -346,10 +385,12 @@ function HtmlPlayground() {
           </div>
           <div className="h-[500px] overflow-hidden rounded-lg border border-dark-600 bg-white">
             <iframe
+              key={iframeKey}
               ref={iframeRef}
               title="HTML Preview"
               className="h-full w-full"
               sandbox="allow-scripts allow-modals"
+              onLoad={handleIframeLoad}
             />
           </div>
         </div>
