@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 /**
  * 代码实验室 - Playground
@@ -222,63 +222,21 @@ const DEFAULT_HTML_CODE = `<!DOCTYPE html>
 function HtmlPlayground() {
   const [htmlCode, setHtmlCode] = useState(DEFAULT_HTML_CODE)
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code')
-  const [iframeKey, setIframeKey] = useState(0)
+  const [previewHtml, setPreviewHtml] = useState(DEFAULT_HTML_CODE)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  // 更新 iframe 内容
-  const updatePreview = useCallback(() => {
-    if (iframeRef.current) {
-      const iframe = iframeRef.current
-      const doc = iframe.contentDocument || iframe.contentWindow?.document
-      if (doc) {
-        doc.open()
-        doc.write(htmlCode)
-        doc.close()
-      }
-    }
-  }, [htmlCode])
-
-  // 组件挂载时初始化
+  // 代码变化时防抖更新预览
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (iframeRef.current) {
-        const iframe = iframeRef.current
-        const doc = iframe.contentDocument || iframe.contentWindow?.document
-        if (doc) {
-          doc.open()
-          doc.write(htmlCode)
-          doc.close()
-        }
-      }
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [iframeKey])
-
-  // 代码变化时更新预览（防抖）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (iframeRef.current) {
-        const iframe = iframeRef.current
-        const doc = iframe.contentDocument || iframe.contentWindow?.document
-        if (doc) {
-          doc.open()
-          doc.write(htmlCode)
-          doc.close()
-        }
-      }
+      setPreviewHtml(htmlCode)
     }, 300)
     return () => clearTimeout(timer)
   }, [htmlCode])
 
-  // iframe 加载完成后更新内容
-  const handleIframeLoad = () => {
-    updatePreview()
-  }
-
-  // 强制刷新 iframe
+  // 强制刷新 iframe（通过改变 key）
   const forceRefresh = () => {
-    setIframeKey(k => k + 1)
-    setTimeout(updatePreview, 100)
+    setPreviewHtml('')
+    setTimeout(() => setPreviewHtml(htmlCode), 50)
   }
 
   // 格式化代码（简单缩进）
@@ -385,12 +343,11 @@ function HtmlPlayground() {
           </div>
           <div className="h-[500px] overflow-hidden rounded-lg border border-dark-600 bg-white">
             <iframe
-              key={iframeKey}
               ref={iframeRef}
               title="HTML Preview"
               className="h-full w-full"
-              sandbox="allow-scripts allow-modals"
-              onLoad={handleIframeLoad}
+              sandbox="allow-scripts allow-modals allow-same-origin"
+              srcDoc={previewHtml}
             />
           </div>
         </div>
